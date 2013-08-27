@@ -9,7 +9,13 @@ import kurt
 import PIL
 
 '''How to run this plugin:
-    hairball -d. -p sequenceViewer.Sequence test.sb
+	hairball -k <path>/octopiplugin.py -d <folder where sequenceViewer is> -p sequenceViewer.Sequence test.sb
+	For example, if octopiplugin and sequenceViewer are both in the directory where you are:
+    hairball -k octopiplugin.py -d . -p sequenceViewer.Sequence test.sb
+    if sequenceViewer is in your directory but octopiplugin.py is right outside of it:
+    hairball -k ../octopiplugin.py -d . -p sequenceViewer.Sequence test.sb
+    If they're both right outside of it:
+    hairball -k ../octopiplugin.py -d .. -p sequenceViewer.Sequence test.sb
 '''
 
 
