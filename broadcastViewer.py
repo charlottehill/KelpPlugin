@@ -111,21 +111,21 @@ class Broadcast(KelpPlugin):
         self.Events = Events()
         self.Events.analyze(scratch)
         self.ScriptsStart()
-        self.BroadcastDisplay(self.help, self.Events.thumbnails, fil)
+        self.BroadcastDisplay(self.help, self.Events.thumbnails)
 
-    def BroadcastDisplay(self, brod, thumbnails, fil):
-		file = KelpPlugin.html_view("broadcast", "Broadcast Receive")
+    def BroadcastDisplay(self, brod, thumbnails):
+        file = KelpPlugin.html_view("broadcast", "Broadcast Receive")
         file.write('<body>')
         file.write('<h2 style="text-align:center;">Broadcast / Receive</h2>')
 
         #call to create HTML table
-        self.broadcastHTML(brod, thumbnails, fil)
+        self.broadcastHTML(brod, thumbnails, file)
         file.close()
         return 0
 
 
         '''HTML '''
-    def broadcastHTML(self, brod, thumbnails, fil):
+    def broadcastHTML(self, brod, thumbnails, file):
         message = ""
         for type, lists in brod.items():
             for list in lists:

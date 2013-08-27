@@ -194,7 +194,7 @@ class KelpPlugin(HairballPlugin):
                         reachable.add(script)
 
     @classmethod
-    def thumbnails(cls, scratch):
+    def get_thumbnails(cls, scratch):
         # Stores the name of the project
         projectName = scratch.name
         

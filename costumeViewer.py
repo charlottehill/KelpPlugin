@@ -55,10 +55,11 @@ class Costumes(KelpPlugin):
 
         #costumes
         self.costumes(scratch)
-        self.CostumeDisplay(self.costumes, fil)
+        self.CostumeDisplay(self.costumes)
 
-    def CostumeDisplay(self, cost, fil):
-		file = KelpPlugin.html_view("costume", "Costumes")
+
+    def CostumeDisplay(self, cost):
+        file = KelpPlugin.html_view("costume", "Costumes")
         file.write('<body>')
 
         # Displays sprite names and costumes
@@ -80,8 +81,14 @@ class Costumes(KelpPlugin):
         file.write('  </tr>')
         file.write('</table>')
 
-        self.Broadcast.BroadcastDisplay(self.Broadcast.help, KelpPlugin.thumbnails, fil)
-        self.Init.initializationDisplay(self.Init.changes, self.Init.events);
+        self.Broadcast.broadcastHTML(self.Broadcast.help, KelpPlugin.thumbnails, file)
+        isEmpty = True
+        for sprite in self.Init.changes.keys():
+                for attr in self.Init.changes[sprite].keys():
+                        if self.Init.changes[sprite][attr]:
+                                isEmpty = False
+                                break
+        self.Init.InitScriptsDisplay(KelpPlugin.thumbnails, self.Init.changes, file)
 
         file.write('</body>')
         file.write('</html>')

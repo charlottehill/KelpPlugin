@@ -60,7 +60,7 @@ class Events(KelpPlugin):
     def analyze(self, scratch):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
-        KelpPlugin.thumbnails(scratch)
+        KelpPlugin.get_thumbnails(scratch)
         self.ScriptsType(scratch)
         self.EventsDisplay(self.thumbnails, self.types)
 
