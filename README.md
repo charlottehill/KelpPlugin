@@ -66,12 +66,14 @@ To run flake8 (from inside your KelpPlugin directory):
 ## Running Plugins Offline
 Basically, you're going to run Hairball but tell it to use the Kelp plugins and use the Kurt octopi plugin so that it can read .oct files. Offline.py calls Hairball and figures out which plugins you need for your lesson and project.
 Lesson options:
-- sequential
-- events
-- initialization
-- broadcast
-- costumes
-- scenes (just runs the same stuff as costumes)
+
+* sequential
+* events
+* initialization
+* broadcast
+* costumes
+* scenes (just runs the same stuff as costumes)
+
 Project options:
 (none yet)
 If you just want to use the default lesson with no extra project plugins, leave off the project concept argument.
