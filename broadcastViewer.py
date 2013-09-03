@@ -56,10 +56,13 @@ class Broadcast(KelpPlugin):
                         self.events[e].append((sprite, script))
                         self.BroadcastIter(script, e, sprite)
 
-    def ScriptsStart(self):
+
         """Returns a dictionary of the scripts.
             Keys: start events
             Values: scripts that begin with those events ."""
+    def analyze(self, scratch):
+        if not getattr(scratch, 'kelp_prepared', False):
+            KelpPlugin.tag_reachable_scripts(scratch)
         self.broadcasts = dict()
         self.receives = dict()
         self.events = dict()
@@ -76,6 +79,9 @@ class Broadcast(KelpPlugin):
             check for a corresponding when I receive. If there is, continue looking
             through that script for broadcast blocks. Add all connected     scripts to a set
             in the dictionary as (sprite, list of scripts) sets?"""
+
+        self.Events = Events()
+        self.Events.analyze(scratch)
         for e in self.events.keys():
             for sprite, types in self.Events.types[e].items():
                 for script in types['visible'] | types['hidden']:
@@ -103,62 +109,48 @@ class Broadcast(KelpPlugin):
                                                 addon.append((sprite2,script2))
                                     extra.extend(addon)
                     	self.help[e].append(extra)
+        return {'broadcast': self.help, 'thumbnails': KelpPlugin.thumbnails(scratch)}
 
-
-    def analyze(self, scratch):
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
-        self.Events = Events()
-        self.Events.analyze(scratch)
-        self.ScriptsStart()
-        self.BroadcastDisplay(self.help, self.Events.thumbnails)
-
-    def BroadcastDisplay(self, brod, thumbnails):
-        file = KelpPlugin.html_view("broadcast", "Broadcast Receive")
-        file.write('<body>')
-        file.write('<h2 style="text-align:center;">Broadcast / Receive</h2>')
-
-        #call to create HTML table
-        self.broadcastHTML(brod, thumbnails, file)
-        file.close()
-        return 0
-
-
-        '''HTML '''
-    def broadcastHTML(self, brod, thumbnails, file):
-        message = ""
-        for type, lists in brod.items():
-            for list in lists:
-                file.write('<hr>')
-                file.write('<h2>{0}<h2>'.format(type)) #heading
-                file.write('<table border = "1">')
-                for sprite, script in list:
-                    if self.script_start_type(script) == self.HAT_WHEN_I_RECEIVE:
-                        # check if the message is the same as the last one
-                        # if it is, print this script next to the last
-                        # otherwise, print it below the last
-                        if message != script[0].args[0].lower():
-                            file.write('  </tr>')
-                            file.write('  <tr>')
-                        message = script[0].args[0].lower()
-                        script_images = KelpPlugin.to_scratch_blocks(sprite, script)
-                        file.write('<td>')
-                        file.write('<p>        {0}</p>'.format(sprite))
-                        file.write('    <p><img src="{0}" height="100" width="100"></p>'.format(thumbnails[sprite]))
-                        file.write('<pre class="blocks">')
-                        file.write('<p>{0}</p>'.format(script_images))
-                        file.write('</pre>')
-                        file.write('</td>')
-                    elif self.script_start_type != self.NO_HAT:
-                        if message == "":
-                            file.write('  </tr>')
-                        file.write('  <tr>')
-                        script_images = KelpPlugin.to_scratch_blocks(sprite, script)
-                        file.write('<p>{0}</p>'.format(sprite))
-                        file.write('    <p><img src="{0}" height="100" width="100"></p>'.format(thumbnails[sprite]))
-                        file.write('<pre class="blocks">')
-                        file.write('<p>{0}</p>'.format(script_images))
-                        file.write('</pre>')
-                        file.write('  </tr>')
-                file.write('</table>')
+def broadcast_display(results):
+    broadcast = results['broadcast']
+    thumbnails = results['thumbnails']
+    html = []
+    html.append('\n<body>')
+    html.append('\n<h2 style="text-align:center;">Broadcast / Receive</h2>')
+    message = ""
+    for type, lists in broadcast.items():
+        for list in lists:
+            html.append('\n<hr>')
+            html.append('\n<h2>{0}<h2>'.format(KelpPlugin.SCRIPT_TITLES[type])) #heading
+            html.append('\n<table border = "1">')
+            for sprite, script in list:
+                if KelpPlugin.script_start_type(script) == KelpPlugin.HAT_WHEN_I_RECEIVE:
+                    # check if the message is the same as the last one
+                    # if it is, print this script next to the last
+                    # otherwise, print it below the last
+                    if message != script[0].args[0].lower():
+                        html.append('\n  </tr>')
+                        html.append('\n  <tr>')
+                    message = script[0].args[0].lower()
+                    script_images = KelpPlugin.to_scratch_blocks(sprite, script)
+                    html.append('\n<td>')
+                    html.append('\n<p>        {0}</p>'.format(sprite))
+                    html.append('\n    <p><img src="{0}" height="100" width="100"></p>'.format(thumbnails[sprite]))
+                    html.append('\n<pre class="blocks">')
+                    html.append('\n<p>{0}</p>'.format(script_images))
+                    html.append('\n</pre>')
+                    html.append('\n</td>')
+                elif KelpPlugin.script_start_type != KelpPlugin.NO_HAT:
+                    if message == "":
+                        html.append('\n  </tr>')
+                    html.append('\n  <tr>')
+                    script_images = KelpPlugin.to_scratch_blocks(sprite, script)
+                    html.append('\n<p>{0}</p>'.format(sprite))
+                    html.append('\n    <p><img src="{0}" height="100" width="100"></p>'.format(thumbnails[sprite]))
+                    html.append('\n<pre class="blocks">')
+                    html.append('\n<p>{0}</p>'.format(script_images))
+                    html.append('\n</pre>')
+                    html.append('\n  </tr>')
+            html.append('\n</table>')
+        return ''.join(html)
 

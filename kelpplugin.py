@@ -2,7 +2,7 @@ import kurt
 import os
 from hairball.plugins import HairballPlugin
 
-BASE_PATH = './results'
+BASE_PATH = '.'
 
 class KelpPlugin(HairballPlugin):
 
@@ -38,6 +38,13 @@ class KelpPlugin(HairballPlugin):
                            ('set size to %s%%', 'absolute')]),
         'visibility': frozenset([('hide', 'absolute'),
                                  ('show', 'absolute')])}
+
+    SCRIPT_TITLES = {
+        HairballPlugin.HAT_GREEN_FLAG: 'When green flag clicked scripts',
+        HairballPlugin.HAT_WHEN_I_RECEIVE: 'When I receive a message scripts',
+        HairballPlugin.HAT_KEY: 'When a key is pressed scripts',
+        HairballPlugin.HAT_MOUSE: 'When this sprite is clicked scripts',
+        HairballPlugin.NO_HAT: 'Scripts without hat blocks'}
 
     @classmethod
     def html_view(cls, file_name, title):
@@ -159,6 +166,7 @@ class KelpPlugin(HairballPlugin):
         # Must be world readable for NGINX to serve the file.
         return path
 
+
     @classmethod
     def tag_reachable_scripts(cls, scratch):
         """Tag each script with attribute reachable.
@@ -194,15 +202,13 @@ class KelpPlugin(HairballPlugin):
                         reachable.add(script)
 
     @classmethod
-    def get_thumbnails(cls, scratch):
-        # Stores the name of the project
-        projectName = scratch.name
-        
-        KelpPlugin.thumbnails = dict()
-        KelpPlugin.thumbnails['Stage'] = KelpPlugin.save_png(projectName, scratch.stage.backgrounds[0], 'Stage');
-        KelpPlugin.thumbnails['screen'] = KelpPlugin.save_png(projectName, scratch.thumbnail, 'screen');
+    def thumbnails(cls, scratch):
+        thumbnails = dict()
+        thumbnails['Stage'] = KelpPlugin.save_png(scratch.name, scratch.stage.backgrounds[0], 'Stage');
+        thumbnails['screen'] = KelpPlugin.save_png(scratch.name, scratch.thumbnail, 'screen');
         for sprite in scratch.sprites:
-            KelpPlugin.thumbnails[sprite.name] = KelpPlugin.save_png(projectName, sprite.costumes[0], sprite.name)
+            thumbnails[sprite.name] = KelpPlugin.save_png(scratch.name, sprite.costumes[0], sprite.name)
+        return thumbnails
 
     @classmethod
     def to_scratch_blocks(cls, heading, scripts):

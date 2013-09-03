@@ -49,25 +49,30 @@ class Sequence(KelpPlugin):
         if points == False:
             seq['points'] = '-1'
 
-        # show the display
-        self.SequenceDisplay(seq)
+    	return seq
 
+class Screenshot(KelpPlugin):
+    def __init__(self):
+        super(Screenshot, self).__init__
 
-    def SequenceDisplay(self, seq):
-        file = open('results/Sequence.html', 'w')
-        # stylesheet
-        file.write('<link rel="stylesheet" type="text/css" href="style.css">')
-        
-        # print the screen
-        file.write('<h1>Screenshot of Octopi Project</h1>')
-        file.write('<img src="{0}" border="1" heigh="240" width="320">'.format(seq['screen']))
+    def analyze(self, scratch):
+        self.thumbnails = dict()
+        self.thumbnails['screen'] = KelpPlugin.save_png(scratch.name, scratch.thumbnail, 'screen')
+        return self.thumbnails
 
-        # variables
-        for var in ['level', 'points']:
-        	if seq[var] == '-1': #if they don't exist don't print them out
-        		file.write('<p>The variable <b>' + var + ' </b>does not exist</p>')
-        	else:
-        		file.write('<p>{0}: {1}</p>'.format(var, seq[var]))
+def project_screenshot(thumbnails):
+    html = []
+    html.append('\n    <h2> Screenshot of Octopi Project </h2>')
+    html.append('\n    <td><img src="{0}"'.format(thumbnails['screen']))
+    html.append('height="240" width="320" border="1"></td>')
+    return ''.join(html)
 
-        file.close()
-        return 0
+def sequence_display(seq):
+    html = []
+    # variables
+    for var in ['level', 'points']:
+        if seq[var] == '-1': #if they don't exist don't print them out
+            html.append('<p>The variable <b>' + var + ' </b>does not exist</p>')
+        else:
+            html.append('<p>{0}: {1}</p>'.format(var, seq[var]))
+    return ''.join(html)

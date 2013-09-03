@@ -98,65 +98,58 @@ class Initialization(KelpPlugin):
     def analyze(self, scratch):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
-
-        # events
-        self.Events = Events()
-        self.Events.analyze(scratch)
-
-        #initialization
         self.changes = dict()
         for sprite in scratch.sprites + [scratch.stage]:
             self.changes[sprite.name] = dict()
             for attr in self.BLOCKMAPPING.keys():
                 self.changes[sprite.name][attr] = []
                 self.attribute_state(sprite.name, sprite.scripts, attr)
-        self.initializationDisplay(self.changes, self.Events)
-
-    def initializationDisplay(self, changes, events):
-        file = KelpPlugin.html_view("Initialization", "Initialization")
-        file.write('<body>')
-
-        events.ScriptEventsDisplay(events.thumbnails, events.types, fil)
-        isEmpty = True
-        for sprite in changes.keys():
-        	for attr in changes[sprite].keys():
-        		if changes[sprite][attr]:
-        			isEmpty = False
-        			break
-        if not isEmpty:
-       		self.InitScriptsDisplay(events.thumbnails, changes, file)
-
-        file.write('</body>')
-        file.write('</html>')
-        file.close()
+        return {'changes': self.changes, 'thumbnails': KelpPlugin.thumbnails(scratch)}
 
 
-    def InitScriptsDisplay(self, thumbnails, changes, file):
-        sprite_names = []
-        for name in thumbnails.keys():
-            if name != 'screen':
-                sprite_names.append(name)
-        # Displays sprite names and pictures
-        file.write('<h2> Uninitialized Scripts</h2>')
-        file.write('<table border="1">')
-        file.write('  <tr>')
-        for sprite in sprite_names:
-            file.write('    <th>{0}</th>'.format(sprite))
-        file.write('  </tr>  <tr>')
-        for sprite in sprite_names:
-            file.write('    <td><img src="{0}" ></td>'.format(thumbnails[sprite]))
-        file.write('  </tr>')
-        # Displays uninitialized scripts
-        file.write('  <tr>')
-        for sprite in sprite_names:
-            file.write('  <td>')
-            for type, list in changes[sprite].items():
-                if list:
-                    for block, script in list:
-                        #This will display the problem block
-                        file.write('<pre class="error"><p>{0}\n</p></pre>'.format(block.stringify(True)))
-                        #This will display the script that the block is in
-                        file.write('<pre class="blocks"><p>{0}</p></pre>'.format(KelpPlugin.to_scratch_blocks(sprite, script)))
-            file.write('  </td>')
-        file.write('  </tr></table>')
-        return 0
+def initialization_display(results):
+    changes = results['changes']
+    thumbnails = results['thumbnails']
+    html = []
+    html.append('<body>')
+    empty = True
+    for sprite in changes.keys():
+        for attr in changes[sprite].keys():
+            if changes[sprite][attr]:
+                empty = False
+                break
+    if empty:
+    	html.append('</body>')
+    	return ''.join(html)
+
+    sprite_names = []
+    for name in thumbnails.keys():
+        if name != 'screen':
+            sprite_names.append(name)
+    # Displays sprite names and pictures
+    html.append('<h2> Uninitialized Scripts</h2>')
+    html.append('<table border="1">')
+    html.append('  <tr>')
+    for sprite in sprite_names:
+        html.append('    <th>{0}</th>'.format(sprite))
+    html.append('  </tr>  <tr>')
+    for sprite in sprite_names:
+        html.append('    <td><img src="{0}" ></td>'.format(thumbnails[sprite]))
+    html.append('  </tr>')
+
+    # Displays uninitialized scripts
+    html.append('  <tr>')
+    for sprite in sprite_names:
+        html.append('  <td>')
+        for type, list in changes[sprite].items():
+            if list:
+                for block, script in list:
+                    #This will display the problem block
+                    html.append('<pre class="error"><p>{0}\n</p></pre>'.format(block.stringify(True)))
+                    #This will display the script that the block is in
+                    html.append('<pre class="blocks"><p>{0}</p></pre>'.format(KelpPlugin.to_scratch_blocks(sprite, script)))
+        html.append('  </td>')
+    html.append('  </tr></table>')
+    html.append('</body>')
+    html.append('</html>')
+    return ''.join(html)
