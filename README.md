@@ -1,14 +1,16 @@
 # Kelp plugins
 This is a set of Hairball plugins that correspond to the Kelp curriculum.
 
-## Requirements
-You need the latest version of Hairball and Kurt. If you have pip, you can install Kurt using:
+## Installation
 
-	pip install kurt
+If you are checking out the source, the simplest way to install everything is
+via `python setup.py develop`. This will install all the dependencies of the
+project. You may need to prefix that line with `sudo` if you are installing at
+the system-level.
 
-And Hairball:
+Once installed in development mode, the command `kelp` can be run from any
+directory (regardless of where your source directory is located).
 
-	pip install hairball
 
 ## Using Git
 You can also use the Github application, but if you'd rather use terminal, here are some useful commands:
@@ -51,7 +53,9 @@ To run flake8 (from inside your KelpPlugin directory):
         # The first time you push run
         # git push -u origin master
 
-0. If the remote repository has changed since you last pulled, you might get an error here. Here are the basic steps for merging, although it can get more difficult. First, pull the latest version.
+0. If the remote repository has changed since you last pulled, you might get an
+error here. Here are the basic steps for merging, although it can get more
+difficult. First, pull the latest version.
 
 	git pull
 
@@ -64,9 +68,12 @@ To run flake8 (from inside your KelpPlugin directory):
 	git push
 
 ## Running Plugins Offline
-Basically, you're going to run Hairball but tell it to use the Kelp plugins and use the Kurt octopi plugin so that it can read .oct files.
 
-Offline.py calls Hairball and figures out which plugins you need for your lesson and project.
+Basically, you're going to run Hairball but tell it to use the Kelp plugins and
+use the Kurt octopi plugin so that it can read .oct files.
+
+Offline.py calls Hairball and figures out which plugins you need for your
+lesson and project.
 
 Lesson options:
 
@@ -81,16 +88,21 @@ Project options:
 
 * (none yet)
 
-If you just want to use the default lesson with no extra project plugins, leave off the project concept argument.
+If you just want to use the default lesson with no extra project plugins, leave
+off the `projectconcept` argument.
 
-For now, you have to have octopi.py in the same directory as the plugins, but we can change that if you'd like.
+For now, you have to have octopi.py in the same directory as the plugins, but
+we can change that if you'd like. Assuming you have installed the kelp package
+as per the above instruction run:
 
-	python offline.py filename.oct plugindirectory lessonname projectconcept(optional)
+    kelp filename.oct lessonname [projectconcept]
 
-For example, if everything is inside your current directory:
+For example, if you want to run the `sequential` lesson plugin on `project.oct`
+you would run:
 
-	python offline.py project.oct . sequential
+    kelp project.oct sequential
 
-If `octopip.py` and `sequenceViewer.py` are inside of a directory called "plugins" and test.sb is in a directory called "testfiles":
+If the file you want to analyze, `test.oct` is in a directory named
+`testfiles` you will want to run:
 
-	python offline.py testfiles/project.oct plugins sequential
+    kelp testfiles/test.oct sequential

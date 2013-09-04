@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from .broadcastViewer import broadcast_display
-from .costumeViewier import costume_display
-from .eventViewer import event_display
-from .initializationViewer import initialization_display
-from .sequenceViewer import project_screenshot, sequence_display
-from hairball import Hairball
-from octopi import OctopiPlugin
+from . import broadcastViewer
+from . import costumeViewer
+from . import eventViewer
+from . import initializationViewer
+from . import sequenceViewer
+from octopi import OctopiPlugin  # noqa
+from optparse import OptionParser
 import kurt
 import sys
 
@@ -20,25 +20,21 @@ lessons = {'sequential': frozenset(['predatorprey', 'egypt', 'thanksgiving']),
            'costumes': frozenset(['racing']),
            'scenes': frozenset(['goldrush'])}
 
-plugins = {'sequential': frozenset(['sequenceViewer.Sequence',
-                                    'sequenceViewer.Screenshot']),
-           'events': frozenset(['eventViewer.Events',
-                                'sequenceViewer.Screenshot']),
-           'initialization': frozenset(['initializationViewer.Initialization',
-                                        'eventViewer.Events']),
-           'broadcast': frozenset(['broadcastViewer.Broadcast',
-                                   'eventViewer.Events']),
-           'costumes': frozenset(['costumeViewer.Costumes',
-                                  'broadcastViewer.Broadcast',
-                                  'initializationViewer.Initialization', ]),
-           'scenes': frozenset(['costumeViewer.Costumes'])}
+plugins = {'sequential': [sequenceViewer.Sequence, sequenceViewer.Screenshot],
+           'events': [eventViewer.Events, sequenceViewer.Screenshot],
+           'initialization': [initializationViewer.Initialization,
+                              eventViewer.Events],
+           'broadcast': [broadcastViewer.Broadcast, eventViewer.Events],
+           'costumes': [costumeViewer.Costumes, broadcastViewer.Broadcast,
+                        initializationViewer.Initialization],
+           'scenes': [costumeViewer.Costumes]}
 
-htmlwrappers = {'Sequence': sequence_display,
-                'Screenshot': project_screenshot,
-                'Initialization': initialization_display,
-                'Events': event_display,
-                'Broadcast': broadcast_display,
-                'Costumes': costume_display}
+htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
+                'Screenshot': sequenceViewer.project_screenshot,
+                'Initialization': initializationViewer.initialization_display,
+                'Events': eventViewer.event_display,
+                'Broadcast': broadcastViewer.broadcast_display,
+                'Costumes': costumeViewer.costume_display}
 
 
 def html_view(title):
@@ -73,41 +69,34 @@ def html_view(title):
 
 
 def main():
+    parser = OptionParser(usage='%prog FILENAME.oct LESSON [PROJECT]')
+    options, args = parser.parse_args()
+    if len(args) < 2 or len(args) > 3:
+        parser.error('Incorrect number of arguments.')
     # go through the command line arguments
-    path = sys.argv[1]
-    directory = sys.argv[2]
-    lesson = sys.argv[3]
-    if (len(sys.argv) > 4):
-        project = sys.argv[5]
-    else:
-        project = 'default'
+    path = args[0]
+    lesson = args[1]
+    project = args[2] if len(args) > 2 else None
+
+    # Verify the lesson
+    if lesson not in plugins:
+        print('Lession `{}` not valid. Goodbye!'.format(lesson))
+        sys.exit(1)
+    # Add the project-specific plugins
+    # TODO: This does not look like it works correctly (should it fetch from
+    #       lesson? Are those names mixed up?
+    plugins[lesson].extend(lessons.get(project, []))
 
     # set up kurt project
-    kurt.plugin.Kurt.register(OctopiPlugin())
     octo = kurt.Project.load(path)
     octo.hairball_prepared = False
 
-    # make lists of all the plugins and views
-    plugin_list = ['hairball', '-k', 'octopi.py', '-d', directory]
-    if lesson not in plugins.keys():
-        exit(1)
-    for proj in plugins[lesson]:
-        plugin_list.append('-p')
-        plugin_list.append(proj)
-    if (project != 'default'):
-        if project in plugins.keys():
-            for extra in plugins[project]:
-                plugin_list.append('-p')
-                plugin_list.append(extra)
-    plugin_list.append(path)
-
-    # initialize Hairball and html
-    hairball = Hairball(plugin_list)
-    hairball.initialize_plugins()
+    # Prepare the output result
     html_list = [html_view(lesson)]
 
-    # for each plugin, run Hairball and the associated view
-    for plugin in hairball.plugins:
+    # Call the plugins directly (hairball isn't really needed)
+    for plugin_class in plugins[lesson]:
+        plugin = plugin_class()
         name = plugin.__class__.__name__
         results = plugin._process(octo)
         html_list.append(htmlwrappers[name](results))
