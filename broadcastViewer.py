@@ -10,13 +10,13 @@ import kurt
 
 
 '''How to run this plugin:
-	hairball -k <path>/octopiplugin.py -d <folder where sequenceViewer is> -p sequenceViewer.Sequence test.sb
-	For example, if octopiplugin and sequenceViewer are both in the directory where you are:
-    hairball -k octopiplugin.py -d . -p sequenceViewer.Sequence test.sb
-    if sequenceViewer is in your directory but octopiplugin.py is right outside of it:
-    hairball -k ../octopiplugin.py -d . -p sequenceViewer.Sequence test.sb
+	hairball -k <path>/octopi.py -d <folder where sequenceViewer is> -p sequenceViewer.Sequence test.sb
+	For example, if `octopi.py` and sequenceViewer are both in the directory where you are:
+    hairball -k octopi.py -d . -p sequenceViewer.Sequence test.sb
+    if sequenceViewer is in your directory but `octopi.py` is right outside of it:
+    hairball -k ../octopi.py -d . -p sequenceViewer.Sequence test.sb
     If they're both right outside of it:
-    hairball -k ../octopiplugin.py -d .. -p sequenceViewer.Sequence test.sb
+    hairball -k ../octopi.py -d .. -p sequenceViewer.Sequence test.sb
 '''
 class Broadcast(KelpPlugin):
 

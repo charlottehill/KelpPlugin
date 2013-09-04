@@ -8,11 +8,10 @@ from sequenceViewer import *
 from initializationViewer import *
 from costumeViewer import *
 from kelpplugin import KelpPlugin
-from octopiplugin import OctopiPlugin
+from octopi import OctopiPlugin
 import os
 import sys
 import kurt
-from octopiplugin import OctopiPlugin
 from hairball import Hairball
 
 
@@ -85,7 +84,7 @@ def main():
 
     
     # make lists of all the plugins and views
-    plugin_list = ['hairball', '-k', 'octopiplugin.py', '-d', directory]
+    plugin_list = ['hairball', '-k', 'octopi.py', '-d', directory]
     view_list = []
     if lesson not in plugins.keys():
         exit(1)
@@ -119,4 +118,5 @@ def main():
     file.write(''.join(html_list))
     file.close()
 
-main()
+if __name__ == '__main__':
+    sys.exit(main())

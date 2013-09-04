@@ -83,7 +83,7 @@ Project options:
 
 If you just want to use the default lesson with no extra project plugins, leave off the project concept argument.
 
-For now, you have to have octopiplugin in the same directory as the plugins, but we can change that if you'd like.
+For now, you have to have octopi.py in the same directory as the plugins, but we can change that if you'd like.
 
 	python offline.py filename.oct plugindirectory lessonname projectconcept(optional)
 
@@ -91,6 +91,6 @@ For example, if everything is inside your current directory:
 
 	python offline.py project.oct . sequential
 
-If octopiplugin and sequenceViewer are inside of a directory called "plugins" and test.sb is in a directory called "testfiles":
+If `octopip.py` and `sequenceViewer.py` are inside of a directory called "plugins" and test.sb is in a directory called "testfiles":
 
 	python offline.py testfiles/project.oct plugins sequential
