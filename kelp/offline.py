@@ -1,21 +1,17 @@
 #!/usr/bin/env python
-
 from __future__ import print_function
-from collections import Counter
-from eventViewer import *
-from broadcastViewer import *
-from sequenceViewer import *
-from initializationViewer import *
-from costumeViewer import *
-from kelpplugin import KelpPlugin
-from octopi import OctopiPlugin
-import os
-import sys
-import kurt
+from .broadcastViewer import broadcast_display
+from .costumeViewier import costume_display
+from .eventViewer import event_display
+from .initializationViewer import initialization_display
+from .sequenceViewer import project_screenshot, sequence_display
 from hairball import Hairball
+from octopi import OctopiPlugin
+import kurt
+import sys
 
 
-#to run: python offline.py file_name.oct plugin_directory lesson_name project_concept(optional)
+# to run: kelp name.oct plugin_directory lesson_name [project_concept]
 
 lessons = {'sequential': frozenset(['predatorprey', 'egypt', 'thanksgiving']),
            'events': frozenset(['planets', 'racing', 'musical', 'piano']),
@@ -24,11 +20,16 @@ lessons = {'sequential': frozenset(['predatorprey', 'egypt', 'thanksgiving']),
            'costumes': frozenset(['racing']),
            'scenes': frozenset(['goldrush'])}
 
-plugins = {'sequential': frozenset(['sequenceViewer.Sequence', 'sequenceViewer.Screenshot']),
-           'events': frozenset(['eventViewer.Events', 'sequenceViewer.Screenshot']),
-           'initialization': frozenset(['initializationViewer.Initialization', 'eventViewer.Events']),
-           'broadcast':frozenset(['broadcastViewer.Broadcast', 'eventViewer.Events']),
-           'costumes': frozenset(['costumeViewer.Costumes', 'broadcastViewer.Broadcast',
+plugins = {'sequential': frozenset(['sequenceViewer.Sequence',
+                                    'sequenceViewer.Screenshot']),
+           'events': frozenset(['eventViewer.Events',
+                                'sequenceViewer.Screenshot']),
+           'initialization': frozenset(['initializationViewer.Initialization',
+                                        'eventViewer.Events']),
+           'broadcast': frozenset(['broadcastViewer.Broadcast',
+                                   'eventViewer.Events']),
+           'costumes': frozenset(['costumeViewer.Costumes',
+                                  'broadcastViewer.Broadcast',
                                   'initializationViewer.Initialization', ]),
            'scenes': frozenset(['costumeViewer.Costumes'])}
 
@@ -46,15 +47,18 @@ def html_view(title):
     html.append('\n<head>')
     html.append('\n<meta charset="utf8">')
     html.append('\n<title>{0}</title>'.format(title))
-    
+
     #<!-- Include jQuery -->
-    html.append('\n<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>')
+    html.append('\n<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/'
+                'jquery.min.js"></script>')
 
     #<!-- Include scratchblocks2 files -->
-    html.append('\n<link rel="stylesheet" href="//charlottehill.com/scratchblocks/build/scratchblocks2.css">')
+    html.append('\n<link rel="stylesheet" href="//charlottehill.com/'
+                'scratchblocks/build/scratchblocks2.css">')
     html.append('\n<link rel="stylesheet" type="text/css" href="style.css">')
-    html.append('\n<script src="//charlottehill.com/scratchblocks/build/scratchblocks2.js"></script>')
-    
+    html.append('\n<script src="//charlottehill.com/scratchblocks/build/'
+                'scratchblocks2.js"></script>')
+
     #<!-- Parse blocks -->
     html.append('\n<script>')
     html.append('\n$(document).ready(function() {')
@@ -66,6 +70,7 @@ def html_view(title):
     html.append('\n</script>')
     html.append('\n</head>')
     return ''.join(html)
+
 
 def main():
     # go through the command line arguments
@@ -79,13 +84,11 @@ def main():
 
     # set up kurt project
     kurt.plugin.Kurt.register(OctopiPlugin())
-    oct = kurt.Project.load(path)
-    oct.hairball_prepared = False
+    octo = kurt.Project.load(path)
+    octo.hairball_prepared = False
 
-    
     # make lists of all the plugins and views
     plugin_list = ['hairball', '-k', 'octopi.py', '-d', directory]
-    view_list = []
     if lesson not in plugins.keys():
         exit(1)
     for proj in plugins[lesson]:
@@ -106,17 +109,16 @@ def main():
     # for each plugin, run Hairball and the associated view
     for plugin in hairball.plugins:
         name = plugin.__class__.__name__
-        results = plugin._process(oct)
+        results = plugin._process(octo)
         html_list.append(htmlwrappers[name](results))
-    
+
     # add on the closing html (to do)
     html_list.append('</body>')
     html_list.append('</html>')
 
     # write to the file (to do: change file and directory names)
-    file = open('results/{0}_{1}.html'.format(lesson, project), 'w')
-    file.write(''.join(html_list))
-    file.close()
+    with open('results/{0}_{1}.html'.format(lesson, project), 'w') as fp:
+        fp.write(''.join(html_list))
 
 if __name__ == '__main__':
     sys.exit(main())
