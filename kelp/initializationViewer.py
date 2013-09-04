@@ -19,7 +19,6 @@ import kurt
 '''
 
 BASE_PATH = './results'
-fil = open('initialization.html', 'w')
 
 def partition_scripts(scripts, start_type):
     """Return two lists of scripts out of the original `scripts` list.
@@ -111,7 +110,6 @@ def initialization_display(results):
     changes = results['changes']
     thumbnails = results['thumbnails']
     html = []
-    html.append('<body>')
     empty = True
     for sprite in changes.keys():
         for attr in changes[sprite].keys():
@@ -119,7 +117,6 @@ def initialization_display(results):
                 empty = False
                 break
     if empty:
-    	html.append('</body>')
     	return ''.join(html)
 
     sprite_names = []
@@ -150,6 +147,4 @@ def initialization_display(results):
                     html.append('<pre class="blocks"><p>{0}</p></pre>'.format(KelpPlugin.to_scratch_blocks(sprite, script)))
         html.append('  </td>')
     html.append('  </tr></table>')
-    html.append('</body>')
-    html.append('</html>')
     return ''.join(html)

@@ -116,7 +116,6 @@ def broadcast_display(results):
     broadcast = results['broadcast']
     thumbnails = results['thumbnails']
     html = []
-    html.append('\n<body>')
     html.append('\n<h2 style="text-align:center;">Broadcast / Receive</h2>')
     message = ""
     for type, lists in broadcast.items():

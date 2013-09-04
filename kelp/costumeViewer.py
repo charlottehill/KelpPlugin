@@ -45,7 +45,6 @@ class Costumes(KelpPlugin):
 
 def costume_display(costumes):
     html = []
-    html.append('<body>')
     html.append('\n<p>COSTUMES</p>')
     html.append('\n<table>')
     html.append('\n  <tr>')
@@ -60,6 +59,4 @@ def costume_display(costumes):
         html.append('\n</td>')
     html.append('\n  </tr>')
     html.append('\n</table>')
-    html.append('\n</body>')
-    html.append('\n</html>')
     return ''.join(html)
