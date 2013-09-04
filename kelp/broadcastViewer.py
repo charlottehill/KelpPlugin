@@ -81,6 +81,7 @@ class Broadcast(KelpPlugin):
             in the dictionary as (sprite, list of scripts) sets?"""
 
         self.Events = Events()
+        self.Events.dir_path = self.dir_path  # HACK for image location
         self.Events.analyze(scratch)
         for e in self.events.keys():
             for sprite, types in self.Events.types[e].items():
@@ -109,7 +110,7 @@ class Broadcast(KelpPlugin):
                                                 addon.append((sprite2,script2))
                                     extra.extend(addon)
                     	self.help[e].append(extra)
-        return {'broadcast': self.help, 'thumbnails': KelpPlugin.thumbnails(scratch)}
+        return {'broadcast': self.help, 'thumbnails': self.thumbnails(scratch)}
 
 def broadcast_display(results):
     broadcast = results['broadcast']

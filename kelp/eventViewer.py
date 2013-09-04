@@ -23,13 +23,14 @@ BASE_PATH = './results'
 class Events(KelpPlugin):
 
     def __init__(self):
-        super(Events, self).__init__
+        super(Events, self).__init__()
 
         """Returns a dictionary of the scripts.
         Keys: start events
         Values: another dictionary
         Keys: sprite names
         Values: that sprite's scripts for this start event ."""
+
     def analyze(self, scratch):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
@@ -56,7 +57,7 @@ class Events(KelpPlugin):
                 self.types[NO_HAT][sprite]["hidden"].add(script)
             elif KelpPlugin.script_start_type(script) in self.types.keys():
                 self.types[KelpPlugin.script_start_type(script)][sprite]["hidden"].add(script)
-        return {'events': self.types, 'thumbnails': KelpPlugin.thumbnails(scratch)}
+        return {'events': self.types, 'thumbnails': self.thumbnails(scratch)}
 
 
 def event_display(results):

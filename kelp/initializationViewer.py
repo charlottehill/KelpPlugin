@@ -104,7 +104,7 @@ class Initialization(KelpPlugin):
             for attr in self.BLOCKMAPPING.keys():
                 self.changes[sprite.name][attr] = []
                 self.attribute_state(sprite.name, sprite.scripts, attr)
-        return {'changes': self.changes, 'thumbnails': KelpPlugin.thumbnails(scratch)}
+        return {'changes': self.changes, 'thumbnails': self.thumbnails(scratch)}
 
 
 def initialization_display(results):

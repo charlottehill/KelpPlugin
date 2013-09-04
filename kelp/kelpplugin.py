@@ -1,8 +1,7 @@
+from hairball.plugins import HairballPlugin
 import kurt
 import os
-from hairball.plugins import HairballPlugin
 
-BASE_PATH = '.'
 
 class KelpPlugin(HairballPlugin):
 
@@ -46,34 +45,6 @@ class KelpPlugin(HairballPlugin):
         HairballPlugin.HAT_MOUSE: 'When this sprite is clicked scripts',
         HairballPlugin.NO_HAT: 'Scripts without hat blocks'}
 
-    @classmethod
-    def html_view(cls, file_name, title):
-        file = open('results/{0}.html'.format(file_name), 'w')
-        file.write('<html>')
-        file.write('<head>')
-        file.write('<meta charset="utf8">')
-        file.write('<title>{0}</title>'.format(title))
-
-        #<!-- Include jQuery -->
-        file.write('<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>')
-
-        #<!-- Include scratchblocks2 files -->
-        file.write('<link rel="stylesheet" href="//charlottehill.com/scratchblocks/build/scratchblocks2.css">')
-        file.write('<link rel="stylesheet" type="text/css" href="style.css">')
-        file.write('<script src="//charlottehill.com/scratchblocks/build/scratchblocks2.js"></script>')
-
-        #<!-- Parse blocks -->
-        file.write('<script>')
-        file.write('$(document).ready(function() {')
-        file.write('     scratchblocks2.parse("pre.blocks");')
-        file.write('     scratchblocks2.parse("pre.hidden");')
-        file.write('     scratchblocks2.parse("pre.error");')
-        file.write('     });')
-        file.write('</script>')
-        file.write('</script>')
-        file.write('</head>')
-        return file
-
     @staticmethod
     def iter_scripts(scratch):
         """A generator for all scripts contained in an octopi file.
@@ -83,16 +54,16 @@ class KelpPlugin(HairballPlugin):
         """
         for script in scratch.stage.scripts:
             if not isinstance(script, kurt.Comment):
-            	yield script
+                yield script
         for script in scratch.stage.hiddenscripts:
             if not isinstance(script, kurt.Comment):
-            	yield script
+                yield script
         for sprite in scratch.sprites:
             for script in sprite.scripts:
-            	if not isinstance(script, kurt.Comment):
+                if not isinstance(script, kurt.Comment):
                     yield script
             for script in sprite.hiddenscripts:
-            	if not isinstance(script, kurt.Comment):
+                if not isinstance(script, kurt.Comment):
                     yield script
 
     @staticmethod
@@ -104,16 +75,16 @@ class KelpPlugin(HairballPlugin):
         """
         for script in scratch.stage.scripts:
             if not isinstance(script, kurt.Comment):
-            	yield ('Stage', script)
+                yield ('Stage', script)
         for script in scratch.stage.hiddenscripts:
             if not isinstance(script, kurt.Comment):
-            	yield ('Stage', script)
+                yield ('Stage', script)
         for sprite in scratch.sprites:
             for script in sprite.scripts:
-            	if not isinstance(script, kurt.Comment):
+                if not isinstance(script, kurt.Comment):
                     yield (sprite.name, script)
             for script in sprite.hiddenscripts:
-            	if not isinstance(script, kurt.Comment):
+                if not isinstance(script, kurt.Comment):
                     yield (sprite.name, script)
 
     @staticmethod
@@ -125,10 +96,10 @@ class KelpPlugin(HairballPlugin):
         """
         for script in scratch.stage.hiddenscripts:
             if not isinstance(script, kurt.Comment):
-            	yield ('Stage', script)
+                yield ('Stage', script)
         for sprite in scratch.sprites:
             for script in sprite.hiddenscripts:
-            	if not isinstance(script, kurt.Comment):
+                if not isinstance(script, kurt.Comment):
                     yield (sprite.name, script)
 
     @staticmethod
@@ -140,32 +111,11 @@ class KelpPlugin(HairballPlugin):
         """
         for script in scratch.stage.scripts:
             if not isinstance(script, kurt.Comment):
-            	yield ('Stage', script)
+                yield ('Stage', script)
         for sprite in scratch.sprites:
             for script in sprite.scripts:
-            	if not isinstance(script, kurt.Comment):
+                if not isinstance(script, kurt.Comment):
                     yield (sprite.name, script)
-
-
-    @staticmethod
-    def save_png(projectName, image, image_name, sprite_name=''):
-        # Creates the name of the picture based on the sprites name
-        pictureName = '{0}{1}.png'.format(sprite_name, image_name).replace('/', '_')
-        # Stores the name of the project
-        partialPath = '{0}'.format(projectName)
-        # Creates the name of the path to the folder to store the pictures
-        folder = os.path.join(BASE_PATH, partialPath + 'Pictures')
-        # Creates the name of the path to store pictures based on the project's name
-        path = os.path.join(BASE_PATH, partialPath + 'Pictures', pictureName)
-        # If the folder does not exist yet, create it
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        # Saves image as a ping to the specified pathway
-        image.save(path)
-        #        os.chmod(path, 0444)  # Read-only archive file
-        # Must be world readable for NGINX to serve the file.
-        return path
-
 
     @classmethod
     def tag_reachable_scripts(cls, scratch):
@@ -183,14 +133,15 @@ class KelpPlugin(HairballPlugin):
         # Initial pass to find reachable and potentially reachable scripts
         for script in cls.iter_scripts(scratch):
             if not isinstance(script, kurt.Comment):
-            	starting_type = HairballPlugin.script_start_type(script)
-            	if starting_type == HairballPlugin.NO_HAT:
+                starting_type = HairballPlugin.script_start_type(script)
+                if starting_type == HairballPlugin.NO_HAT:
                     script.reachable = False
-            	elif starting_type == HairballPlugin.HAT_WHEN_I_RECEIVE:
-                    script.reachable = False  # Value will be updated if reachable
+                elif starting_type == HairballPlugin.HAT_WHEN_I_RECEIVE:
+                    script.reachable = False  # Value will be updated if
+                                              # reachable
                     message = script.blocks[0].args[0].lower()
                     untriggered_events.setdefault(message, set()).add(script)
-            	else:
+                else:
                     script.reachable = True
                     reachable.add(script)
         # Expand reachable states based on broadcast events
@@ -202,19 +153,41 @@ class KelpPlugin(HairballPlugin):
                         reachable.add(script)
 
     @classmethod
-    def thumbnails(cls, scratch):
-        thumbnails = dict()
-        thumbnails['Stage'] = KelpPlugin.save_png(scratch.name, scratch.stage.backgrounds[0], 'Stage');
-        thumbnails['screen'] = KelpPlugin.save_png(scratch.name, scratch.thumbnail, 'screen');
-        for sprite in scratch.sprites:
-            thumbnails[sprite.name] = KelpPlugin.save_png(scratch.name, sprite.costumes[0], sprite.name)
-        return thumbnails
-
-    @classmethod
     def to_scratch_blocks(cls, heading, scripts):
         """Output the scripts in an html-ready scratch blocks format."""
         data = []
         for script in scripts:
             data.append('{0}\n'.format(script.stringify(True)))
-        return ('<div>{0}</div>\n<div class="clear"></div>\n' '</div>\n').format(''.join(data))
+        return ('<div>{0}</div>\n<div class="clear"></div>\n' '</div>\n'
+                .format(''.join(data)))
 
+    def _process(self, scratch, dir_path='.', **kwargs):
+        self.dir_path = dir_path
+        return super(KelpPlugin, self)._process(scratch, **kwargs)
+
+    def save_png(self, projectName, image, image_name, sprite_name=''):
+        # Creates the name of the picture based on the sprites name
+        pictureName = '{0}{1}.png'.format(sprite_name, image_name).replace('/',
+                                                                           '_')
+        # Creates the name of the path to the folder to store the pictures
+        directory = os.path.join(self.dir_path, projectName + 'Pictures')
+        # If the folder does not exist yet, create it
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        # Saves image as a ping to the specified pathway
+        path = os.path.join(directory, pictureName)
+        image.save(path)
+        return path
+
+    def thumbnails(self, scratch):
+        thumbnails = dict()
+        thumbnails['Stage'] = self.save_png(scratch.name,
+                                            scratch.stage.backgrounds[0],
+                                            'Stage')
+        thumbnails['screen'] = self.save_png(scratch.name,
+                                             scratch.thumbnail, 'screen')
+        for sprite in scratch.sprites:
+            thumbnails[sprite.name] = self.save_png(scratch.name,
+                                                    sprite.costumes[0],
+                                                    sprite.name)
+        return thumbnails
