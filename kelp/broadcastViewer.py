@@ -81,7 +81,6 @@ class Broadcast(KelpPlugin):
             in the dictionary as (sprite, list of scripts) sets?"""
 
         self.Events = Events()
-        self.Events.dir_path = self.dir_path  # HACK for image location
         self.Events.analyze(scratch)
         for e in self.events.keys():
             for sprite, types in self.Events.types[e].items():

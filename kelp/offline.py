@@ -106,7 +106,7 @@ def main():
     html_list.append('</html>')
 
     # write to the file (to do: change file and directory names)
-    with open('results/{0}_{1}.html'.format(lesson, project), 'w') as fp:
+    with open('{0}_{1}.html'.format(lesson, project), 'w') as fp:
         fp.write(''.join(html_list))
 
 if __name__ == '__main__':

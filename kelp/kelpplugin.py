@@ -161,23 +161,20 @@ class KelpPlugin(HairballPlugin):
         return ('<div>{0}</div>\n<div class="clear"></div>\n' '</div>\n'
                 .format(''.join(data)))
 
-    def _process(self, scratch, dir_path='.', **kwargs):
-        self.dir_path = dir_path
-        return super(KelpPlugin, self)._process(scratch, **kwargs)
-
-    def save_png(self, projectName, image, image_name, sprite_name=''):
-        # Creates the name of the picture based on the sprites name
-        pictureName = '{0}{1}.png'.format(sprite_name, image_name).replace('/',
-                                                                           '_')
-        # Creates the name of the path to the folder to store the pictures
-        directory = os.path.join(self.dir_path, projectName + 'Pictures')
-        # If the folder does not exist yet, create it
+    @staticmethod
+    def get_paths(image, project_name, image_name, sprite_name):
+        directory = os.path.join('{}images'.format(project_name))
         if not os.path.exists(directory):
             os.makedirs(directory)
-        # Saves image as a ping to the specified pathway
-        path = os.path.join(directory, pictureName)
+        filename = '{0}{1}.png'.format(sprite_name,
+                                       image_name).replace('/', '_')
+        path = os.path.join(directory, filename)
+        return path, path
+
+    def save_png(self, projectName, image, image_name, sprite_name=''):
+        path, url = self.get_paths(image, projectName, image_name, sprite_name)
         image.save(path)
-        return path
+        return url
 
     def thumbnails(self, scratch):
         thumbnails = dict()
