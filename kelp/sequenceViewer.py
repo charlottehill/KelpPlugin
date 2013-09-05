@@ -29,7 +29,7 @@ class Sequence(KelpPlugin):
 
         seq = dict()
         # store the screen
-        seq['screen'] = KelpPlugin.save_png(scratch.name, scratch.thumbnail, 'screen');
+        seq['screen'] = self.save_png(scratch.name, scratch.thumbnail, 'screen');
 
         #store the values for the variables level and points, if they exist
         level = False
@@ -57,7 +57,7 @@ class Screenshot(KelpPlugin):
 
     def analyze(self, scratch):
         self.thumbnails = dict()
-        self.thumbnails['screen'] = KelpPlugin.save_png(scratch.name, scratch.thumbnail, 'screen')
+        self.thumbnails['screen'] = self.save_png(scratch.name, scratch.thumbnail, 'screen')
         return self.thumbnails
 
 def project_screenshot(thumbnails):

@@ -32,13 +32,13 @@ class Costumes(KelpPlugin):
         self.costumes['Stage'] = set()
         index = 0
         for background in scratch.stage.backgrounds:
-            self.costumes['Stage'].add(KelpPlugin.save_png(projectName, background, index, 'Stage'))
+            self.costumes['Stage'].add(self.save_png(projectName, background, index, 'Stage'))
             index += 1
         for sprite in scratch.sprites:
             index = 0
             self.costumes[sprite.name] = set()
             for costume in sprite.costumes:
-                self.costumes[sprite.name].add(KelpPlugin.save_png(projectName, costume, index, sprite.name))
+                self.costumes[sprite.name].add(self.save_png(projectName, costume, index, sprite.name))
                 index += 1
         return self.costumes
 
