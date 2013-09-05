@@ -131,7 +131,7 @@ def initialization_display(results):
         html.append('    <th>{0}</th>'.format(sprite))
     html.append('  </tr>  <tr>')
     for sprite in sprite_names:
-        html.append('    <td><img src="{0}" ></td>'.format(thumbnails[sprite]))
+            html.append('    <td><img src="{0}" height="100" width="100"></td>'.format(thumbnails[sprite]))
     html.append('  </tr>')
 
     # Displays uninitialized scripts

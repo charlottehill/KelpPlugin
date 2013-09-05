@@ -28,8 +28,6 @@ class Sequence(KelpPlugin):
             KelpPlugin.tag_reachable_scripts(scratch)
 
         seq = dict()
-        # store the screen
-        seq['screen'] = self.save_png(scratch.name, scratch.thumbnail, 'screen');
 
         #store the values for the variables level and points, if they exist
         level = False
