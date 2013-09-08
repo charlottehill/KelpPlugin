@@ -29,25 +29,15 @@ class Sequence(KelpPlugin):
 
         seq = dict()
 
-        #store the values for the variables level and points, if they exist
-        level = False
-        points = False
+        #store the values for the variables level, points, and health if they exist
 
-        for name, var in scratch.variables.items():
-            if name == 'level' or name == 'Level':
-                level = True
-                seq[name] = var.value
-            elif name == 'points' or name == 'Points':
-                points = True
-                seq[name] = var.value
-
-        # If they don't exist, store them with the value of -1
-        if level == False:
-            seq['level'] = '-1'
-        if points == False:
-            seq['points'] = '-1'
-
-    	return seq
+        name = ['Level', 'Points', 'Health']
+        for var in name:
+            if var in scratch.variables.keys():
+                seq[var] = scratch.variables[var]
+            else:
+                seq[var] = '-1'
+        return seq
 
 class Screenshot(KelpPlugin):
     def __init__(self):
@@ -68,9 +58,9 @@ def project_screenshot(thumbnails):
 def sequence_display(seq):
     html = []
     # variables
-    for var in ['level', 'points']:
+    for var in seq.keys():
         if seq[var] == '-1': #if they don't exist don't print them out
             html.append('<p>The variable <b>' + var + ' </b>does not exist</p>')
         else:
-            html.append('<p>{0}: {1}</p>'.format(var, seq[var]))
+            html.append('<p>{0}: {1}</p>'.format(var, seq[var].value))
     return ''.join(html)

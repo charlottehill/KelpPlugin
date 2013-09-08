@@ -125,7 +125,7 @@ def initialization_display(results):
             sprite_names.append(name)
     # Displays sprite names and pictures
     html.append('<h2> Uninitialized Scripts</h2>')
-    html.append('<table border="1">')
+    html.append('<table border="20">')
     html.append('  <tr>')
     for sprite in sprite_names:
         html.append('    <th>{0}</th>'.format(sprite))

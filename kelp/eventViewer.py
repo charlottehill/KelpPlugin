@@ -73,12 +73,12 @@ def event_display(results):
                 html.append('    <th>{0}</th>'.format(sprite))
         html.append('</tr>  <tr><td class="noBorder" ></td>')
         for sprite in sprites:
-            html.append('    <td><img src="{0}"></td>'.format(thumbnails[sprite]))
+            html.append('    <td><img src="{0}" height="100" width="100" style="float:center"></td>'.format(thumbnails[sprite]))
         html.append('</tr>')
 
         # Displays scripts
         for event_type, event in events.items():
-            html.append('<tr><td class = "noBorder">{0}</td>'.format(KelpPlugin.SCRIPT_TITLES[event_type]))
+            html.append('<tr><td class = "noBorder"><b>{0}</b></td>'.format(KelpPlugin.SCRIPT_TITLES[event_type]))
             for sprite in sprites:
             	html.append('  <td>')
             	visible = ""
@@ -92,6 +92,6 @@ def event_display(results):
                     	visible += KelpPlugin.to_scratch_blocks(sprite, script)
                 	html.append('<pre class="blocks"><p>{0}</p></pre>'.format(visible))
             	html.append('  </td>')
-        	html.append('  </tr>')
+            html.append('  </tr>')
         return ''.join(html)
 
