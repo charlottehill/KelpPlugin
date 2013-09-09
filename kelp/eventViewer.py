@@ -48,13 +48,13 @@ class Events(KelpPlugin):
         #go through the visible scripts
         for sprite, script in KelpPlugin.iter_sprite_visible_scripts(scratch):
             if not script.reachable:
-                self.types[KelpPlugin.NO_HAT][sprite]["visible"].add(script)
+                self.types[self.NO_HAT][sprite]["visible"].add(script)
             elif KelpPlugin.script_start_type(script) in self.types.keys():
                 self.types[KelpPlugin.script_start_type(script)][sprite]["visible"].add(script)
         #go through the hidden scripts
         for sprite, script in KelpPlugin.iter_sprite_hidden_scripts(scratch):
             if not script.reachable:
-                self.types[NO_HAT][sprite]["hidden"].add(script)
+                self.types[self.NO_HAT][sprite]["hidden"].add(script)
             elif KelpPlugin.script_start_type(script) in self.types.keys():
                 self.types[KelpPlugin.script_start_type(script)][sprite]["hidden"].add(script)
         return {'events': self.types, 'thumbnails': self.thumbnails(scratch)}
