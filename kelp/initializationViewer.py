@@ -29,10 +29,11 @@ def partition_scripts(scripts, start_type):
         """
     match, other = [], []
     for script in scripts:
-        if KelpPlugin.script_start_type(script) == start_type:
-            match.append(script)
-        else:
-            other.append(script)
+    	if not isinstance(script, kurt.Comment):
+            if KelpPlugin.script_start_type(script) == start_type:
+                match.append(script)
+            else:
+                other.append(script)
     return match, other
 
 class Initialization(KelpPlugin):
