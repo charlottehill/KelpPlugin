@@ -6,6 +6,7 @@ from . import eventViewer
 from . import initializationViewer
 from . import sequenceViewer
 from . import danceParty
+from . import planets
 from octopi import OctopiPlugin  # noqa
 from optparse import OptionParser
 import kurt
@@ -29,7 +30,8 @@ plugins = {'sequential': [sequenceViewer.Sequence, sequenceViewer.Screenshot],
            'costumes': [costumeViewer.Costumes, broadcastViewer.Broadcast,
                         initializationViewer.Initialization],
            'scenes': [costumeViewer.Costumes],
-           'dance': [danceParty.DancePartyProject]}
+           'dance': [danceParty.DancePartyProject],
+           'planets': [planets.PlanetsProject]}
 
 htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'Screenshot': sequenceViewer.project_screenshot,
@@ -37,7 +39,8 @@ htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'Events': eventViewer.event_display,
                 'Broadcast': broadcastViewer.broadcast_display,
                 'Costumes': costumeViewer.costume_display,
-                'DancePartyProject': danceParty.danceProj_display}
+                'DancePartyProject': danceParty.danceProj_display,
+                'PlanetsProject': planets.planetProj_display}
 
 
 def html_view(title):
