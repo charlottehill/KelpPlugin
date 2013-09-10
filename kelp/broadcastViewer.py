@@ -113,16 +113,19 @@ class Broadcast(KelpPlugin):
 
 def broadcast_display(results):
     broadcast = results['broadcast']
+    print('printing broadcast dictionary')
+    print(broadcast)
     thumbnails = results['thumbnails']
     html = []
     html.append('\n<h2 style="text-align:center;">Broadcast / Receive</h2>')
     message = ""
-    for type, lists in broadcast.items():
-        for list in lists:
+    for blocktype, lists in broadcast.items():
+        for blocklist in lists:
+            #Does not reach this loop
             html.append('\n<hr>')
-            html.append('\n<h2>{0}<h2>'.format(KelpPlugin.SCRIPT_TITLES[type])) #heading
+            html.append('\n<h2>{0}</h2>'.format(KelpPlugin.SCRIPT_TITLES[blocktype])) #heading
             html.append('\n<table border = "1">')
-            for sprite, script in list:
+            for sprite, script in blocklist:
                 if KelpPlugin.script_start_type(script) == KelpPlugin.HAT_WHEN_I_RECEIVE:
                     # check if the message is the same as the last one
                     # if it is, print this script next to the last
@@ -151,5 +154,5 @@ def broadcast_display(results):
                     html.append('\n</pre>')
                     html.append('\n  </tr>')
             html.append('\n</table>')
-        return ''.join(html)
+    return ''.join(html)
 
