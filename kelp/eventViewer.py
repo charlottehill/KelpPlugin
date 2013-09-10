@@ -45,9 +45,11 @@ class Events(KelpPlugin):
             for morph in scratch.sprites + [scratch.stage]:
                 self.types[event][morph.name] = {"hidden": set(), "visible": set()}
 
+        ### The below loop may be adding duplicate scripts ###
         #go through the visible scripts
         for sprite, script in KelpPlugin.iter_sprite_visible_scripts(scratch):
             if not script.reachable:
+                #also adds un-broadcasted when I receive scripts
                 self.types[KelpPlugin.NO_HAT][sprite]["visible"].add(script)
             elif KelpPlugin.script_start_type(script) in self.types.keys():
                 self.types[KelpPlugin.script_start_type(script)][sprite]["visible"].add(script)
@@ -65,6 +67,7 @@ def event_display(results):
 	events = results['events']
         # Displays sprite names and pictures
         html = []
+        html.append('<h2> Starting Scripts Table </h2>')
         html.append('<table border="1"><tr><th class=noBorder></th>')
         sprites = []
         for sprite in thumbnails.keys():
@@ -86,12 +89,13 @@ def event_display(results):
                 if event[sprite]['hidden']:
                     for script in event[sprite]['hidden']:
                     	hidden += KelpPlugin.to_scratch_blocks(sprite, script)
-                	html.append('<pre class="hidden"><p>{0}</p></pre>'.format(hidden))
+                    html.append('<pre class="hidden"><p>{0}</p></pre>'.format(hidden))
             	if event[sprite]['visible']:
                     for script in event[sprite]['visible']:
                     	visible += KelpPlugin.to_scratch_blocks(sprite, script)
-                	html.append('<pre class="blocks"><p>{0}</p></pre>'.format(visible))
+                    html.append('<pre class="blocks"><p>{0}</p></pre>'.format(visible))
             	html.append('  </td>')
             html.append('  </tr>')
+        html.append('  </table>')
         return ''.join(html)
 

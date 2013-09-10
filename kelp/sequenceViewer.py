@@ -50,9 +50,12 @@ class Screenshot(KelpPlugin):
 
 def project_screenshot(thumbnails):
     html = []
-    html.append('\n    <h2> Screenshot of Octopi Project </h2>')
-    html.append('\n    <td><img src="{0}"'.format(thumbnails['screen']))
-    html.append('height="240" width="320" border="1"></td>')
+    html.append('\n    <h2>Screenshot of Octopi Project </h2>')
+    ##below used to add the screen shot to the table if there was one, we want it to be separate
+    #html.append('\n    <td><img src="{0}"'.format(thumbnails['screen']))
+    #html.append('height="240" width="320" border="1"></td>')
+    html.append('\n    <img src="{0}"'.format(thumbnails['screen']))
+    html.append('height="240" width="320" style="border:5px solid black">')
     return ''.join(html)
 
 def sequence_display(seq):
@@ -60,7 +63,7 @@ def sequence_display(seq):
     # variables
     for var in seq.keys():
         if seq[var] == '-1': #if they don't exist don't print them out
-            html.append('<p>The variable <b>' + var + ' </b>does not exist</p>')
+            html.append('<h3>The variable <b>' + var + ' </b>does not exist</h3>')
         else:
-            html.append('<p>{0}: {1}</p>'.format(var, seq[var].value))
+            html.append('<h3>{0} has a value of {1}</h3>'.format(var, seq[var].value))
     return ''.join(html)

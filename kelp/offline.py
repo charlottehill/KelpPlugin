@@ -42,8 +42,9 @@ def html_view(title):
     html.append('\n<html>')
     html.append('\n<head>')
     html.append('\n<meta charset="utf8">')
-    html.append('\n<title>{0}</title>'.format(title))
-
+    #title() makes first letter capital
+    html.append('\n<h1 style="text-align:center">{0} Lesson</h1>'.format(title.title()))
+    html.append('<hr>')
     #<!-- Include jQuery -->
     html.append('\n<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/'
                 'jquery.min.js"></script>')
