@@ -5,6 +5,7 @@ from . import costumeViewer
 from . import eventViewer
 from . import initializationViewer
 from . import sequenceViewer
+from . import danceParty
 from octopi import OctopiPlugin  # noqa
 from optparse import OptionParser
 import kurt
@@ -17,7 +18,7 @@ lessons = {'sequential': frozenset(['predatorprey', 'egypt', 'thanksgiving']),
            'events': frozenset(['planets', 'racing', 'musical', 'piano']),
            'initialization': frozenset(['game']),
            'broadcast': frozenset(['ca', 'missions', 'instruments']),
-           'costumes': frozenset(['racing']),
+           'costumes': frozenset(['racing', 'dance']),
            'scenes': frozenset(['goldrush'])}
 
 plugins = {'sequential': [sequenceViewer.Sequence, sequenceViewer.Screenshot],
@@ -27,14 +28,16 @@ plugins = {'sequential': [sequenceViewer.Sequence, sequenceViewer.Screenshot],
            'broadcast': [broadcastViewer.Broadcast, eventViewer.Events],
            'costumes': [costumeViewer.Costumes, broadcastViewer.Broadcast,
                         initializationViewer.Initialization],
-           'scenes': [costumeViewer.Costumes]}
+           'scenes': [costumeViewer.Costumes],
+           'dance': [danceParty.DancePartyProject]}
 
 htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'Screenshot': sequenceViewer.project_screenshot,
                 'Initialization': initializationViewer.initialization_display,
                 'Events': eventViewer.event_display,
                 'Broadcast': broadcastViewer.broadcast_display,
-                'Costumes': costumeViewer.costume_display}
+                'Costumes': costumeViewer.costume_display,
+                'DancePartyProject': danceParty.danceProj_display}
 
 
 def html_view(title):
@@ -86,7 +89,9 @@ def main():
     # Add the project-specific plugins
     # TODO: This does not look like it works correctly (should it fetch from
     #       lesson? Are those names mixed up?
-    plugins[lesson].extend(lessons.get(project, []))
+    if project != None:
+        plugins[lesson].extend(plugins[project])
+    #plugins[lesson].extend(lessons.get(project, []))
 
     # set up kurt project
     octo = kurt.Project.load(path)
