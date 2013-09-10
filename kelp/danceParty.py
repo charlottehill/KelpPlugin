@@ -157,7 +157,7 @@ def danceProj_display(results):
         html.append('Good job initilizing your sprites!')
     else:
         for sprite in uninit_attr:
-            html.append('Make sure you initilizing {0}!'.format(sprite))
+            html.append('Make sure you initilize {0}!'.format(sprite))
 
     if len(sprites) < 4:
         html.append('Make sure you add a new sprite!')
