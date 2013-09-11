@@ -32,7 +32,6 @@ class Events(KelpPlugin):
         Values: that sprite's scripts for this start event ."""
 
     def analyze(self, scratch):
-        print('HelloWorld')
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
         #initialize
@@ -82,7 +81,7 @@ def event_display(results):
 
         # Displays scripts
         for event_type, event in events.items():
-            html.append('<tr><td class = "noBorder"><b>{0}</b></td>'.format(KelpPlugin.SCRIPT_TITLES[event_type]))
+            html.append('<tr style="height:30px;"><td style = "width:200px;" class = "noBorder" ><b>{0}</b></td>'.format(KelpPlugin.SCRIPT_TITLES[event_type]))
             for sprite in sprites:
             	html.append('  <td>')
             	visible = ""

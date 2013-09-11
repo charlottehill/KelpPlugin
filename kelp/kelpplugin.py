@@ -43,7 +43,7 @@ class KelpPlugin(HairballPlugin):
         HairballPlugin.HAT_WHEN_I_RECEIVE: 'When I receive a message scripts',
         HairballPlugin.HAT_KEY: 'When a key is pressed scripts',
         HairballPlugin.HAT_MOUSE: 'When this sprite is clicked scripts',
-        HairballPlugin.NO_HAT: 'Scripts without hat blocks'}
+        HairballPlugin.NO_HAT: 'Scripts without starting control blocks (incomplete)'}
 
     @staticmethod
     def iter_scripts(scratch):

@@ -7,7 +7,7 @@ from . import initializationViewer
 from . import sequenceViewer
 from . import danceParty
 from . import planets
-
+from . import predatorPrey
 from octopi import OctopiPlugin  # noqa
 from optparse import OptionParser
 import kurt
@@ -31,7 +31,7 @@ plugins = {'sequential': [sequenceViewer.Sequence, sequenceViewer.Screenshot],
            'costumes': [costumeViewer.Costumes, broadcastViewer.Broadcast,
                         initializationViewer.Initialization],
            'scenes': [costumeViewer.Costumes],
-           'predator': [predatorPrey.Predator]}
+           'predator': [predatorPrey.Predator],
            'dance': [danceParty.DancePartyProject],
            'planets': [planets.PlanetsProject]}
 
@@ -41,7 +41,7 @@ htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'Events': eventViewer.event_display,
                 'Broadcast': broadcastViewer.broadcast_display,
                 'Costumes': costumeViewer.costume_display,
-                'Predator': predatorPrey.predator_display}
+                'Predator': predatorPrey.predator_display,
                 'DancePartyProject': danceParty.danceProj_display,
                 'PlanetsProject': planets.planetProj_display}
 
