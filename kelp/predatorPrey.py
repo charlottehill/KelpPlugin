@@ -43,31 +43,31 @@ class Predator(KelpPlugin):
 def predator_display(seq):
     html = []
     # variables                                                                                                  
-    backgroundColor = 'blue'
+    backgroundColor = 'LightSkyBlue'
 
     #if student completes level 0
     if seq['Level'].value >= 1:
         # if student makes 0 mistakes
         if seq['Level 0 Incorrect Pick-ups'].value == 0:
-            backgroundColor = 'green'
-            html.append('<h2 style="background-color:{1};"> This student completed Level 0 with {0} incorrect pickups </h2>'.format(seq['Level 0 Incorrect Pick-ups'].value, backgroundColor))
+            backgroundColor = 'lime'
+            html.append('<h2 style="background-color:{1};"> This student completed Level 0 with no incorrect animal pickups</h2>'.format(seq['Level 0 Incorrect Pick-ups'].value, backgroundColor))
         else:
-            html.append('<h2 style="background-color:{1};"> This student completed Level 0 with {0} incorrect pickups </h2>'.format(seq['Level 0 Incorrect Pick-ups'].value, backgroundColor))
+            html.append('<h2 style="background-color:{1};"> This student completed Level 0 with {0} incorrect animal pickups out of 1 possible incorrect animal pickups</h2>'.format(seq['Level 0 Incorrect Pick-ups'].value, backgroundColor))
     #student did NOT complete Level 0
     else:
         html.append('<h2 style="background-color:{0};"> This student did not complete Level 0 </h2>'.format(backgroundColor))
 
     html.append('<br>')
 
-    backgroundColor = 'blue'
+    backgroundColor = 'LightSkyBlue'
     #if student completes Level 1
     if seq['Level'].value >= 2:
         #if student does Level 1 w/ 0 mistakes
         if seq['Level 1 Incorrect Pick-ups'].value == 0:
-            backgroundColor = 'green'
-            html.append('<h2 style="background-color:{1}"> This student completed Level 1 with {0} incorrect pickups</h2>'.format(seq['Level 1 Incorrect Pick-ups'].value, backgroundColor))
+            backgroundColor = 'lime'
+            html.append('<h2 style="background-color:{1}"> This student completed Level 1 with no incorrect animal pickups</h2>'.format(seq['Level 1 Incorrect Pick-ups'].value, backgroundColor))
         else:
-            html.append('<h2 style="background-color:{1}"> This student completed Level 1 with {0} incorrect pickups</h2>'.format(seq['Level 1 Incorrect Pick-ups'].value, backgroundColor))
+            html.append('<h2 style="background-color:{1}"> This student completed Level 1 with {0} incorrect pickups out of 2 possible incorrect animal pickups</h2>'.format(seq['Level 1 Incorrect Pick-ups'].value, backgroundColor))
     else:
         html.append('<h2 style="background-color:{0}"> This student did not complete Level 1 </h2>'.format(backgroundColor))
     

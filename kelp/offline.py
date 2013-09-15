@@ -8,13 +8,14 @@ from . import sequenceViewer
 from . import danceParty
 from . import planets
 from . import predatorPrey
+from . import raceInitialization
 from octopi import OctopiPlugin  # noqa
 from optparse import OptionParser
 import kurt
 import sys
 
 
-# to run: kelp name.oct plugin_directory lesson_name [project_concept]
+# to run: kelp name.oct lesson_name [project_concept]
 
 lessons = {'sequential': frozenset(['predatorprey', 'egypt', 'thanksgiving']),
            'events': frozenset(['planets', 'racing', 'musical', 'piano']),
@@ -33,8 +34,11 @@ plugins = {'sequential': [sequenceViewer.Sequence, sequenceViewer.Screenshot],
            'scenes': [costumeViewer.Costumes],
            'predator': [predatorPrey.Predator],
            'dance': [danceParty.DancePartyProject],
-           'planets': [planets.PlanetsProject]}
+           'planets': [planets.PlanetsProject],
+           'racing': [raceInitialization.raceInitialization]}
 
+
+# 'ClassName': filename.displayfunction
 htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'Screenshot': sequenceViewer.project_screenshot,
                 'Initialization': initializationViewer.initialization_display,
@@ -42,8 +46,10 @@ htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'Broadcast': broadcastViewer.broadcast_display,
                 'Costumes': costumeViewer.costume_display,
                 'Predator': predatorPrey.predator_display,
+                'raceInitialization': raceInitialization.initialization_display,
                 'DancePartyProject': danceParty.danceProj_display,
-                'PlanetsProject': planets.planetProj_display}
+                'PlanetsProject': planets.planetProj_display,
+                }
 
 def html_view(title):
     html = []
