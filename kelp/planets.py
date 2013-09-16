@@ -45,7 +45,7 @@ class PlanetsProject(KelpPlugin):
     
         for sprite in scratch.sprites:
             for costume in sprite.costumes:
-                if costume.name != sprite.name:
+                if costume.name.lower() != sprite.name.lower():
                     self.costumes.add(sprite)
         return self.costumes
     
@@ -56,14 +56,15 @@ class PlanetsProject(KelpPlugin):
         for morph in scratch.sprites:
             self.types[morph.name] = set()
         
-        #go through the visible scripts and add the sprite with a say or think block
+        #go through the visible scripts and add the sprites with a say or think block that contain the sprite's name
         for sprite, script in KelpPlugin.iter_sprite_visible_scripts(scratch):
             if script.reachable:
                 if KelpPlugin.script_start_type(script) == self.HAT_MOUSE:
                     for name, _, block in self.iter_blocks(script):
                         if 'say' in name or 'think' in name:
-                            self.types[sprite].add(script)
-                            break
+                            if sprite.lower() in block.args[0].lower():
+                                self.types[sprite].add(script)
+                                break
 
         #if a sprite has no say or think block, their project isn't complete
         noSay = set()
