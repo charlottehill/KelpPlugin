@@ -9,6 +9,7 @@ from . import danceParty
 from . import planets
 from . import predatorPrey
 from . import raceInitialization
+from . import geographyBroadcast
 from octopi import OctopiPlugin  # noqa
 from optparse import OptionParser
 import kurt
@@ -35,7 +36,8 @@ plugins = {'sequential': [sequenceViewer.Sequence, sequenceViewer.Screenshot],
            'predator': [predatorPrey.Predator],
            'dance': [danceParty.DancePartyProject],
            'planets': [planets.PlanetsProject],
-           'racing': [raceInitialization.raceInitialization]}
+           'racing': [raceInitialization.raceInitialization],
+           'cageobcast': [geographyBroadcast.geographyBroadcast]}
 
 
 # 'ClassName': filename.displayfunction
@@ -49,6 +51,7 @@ htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'raceInitialization': raceInitialization.initialization_display,
                 'DancePartyProject': danceParty.danceProj_display,
                 'PlanetsProject': planets.planetProj_display,
+                'geographyBroadcast': geographyBroadcast.geography_display
                 }
 
 def html_view(title):

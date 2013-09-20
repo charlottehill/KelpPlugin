@@ -7,6 +7,7 @@ import os
 import sys
 import kurt
 import PIL
+import pprint
 
 '''How to run this plugin:                                                                                       
         hairball -k <path>/octopi.py -d <folder where sequenceViewer is> -p sequenceViewer.Sequence test.sb      
@@ -35,40 +36,48 @@ class Predator(KelpPlugin):
 
         for var in name:
             if var in scratch.variables.keys():
-                seq[var] = scratch.variables[var]
+                print(scratch.variables[var])
+                seq[var] = int(scratch.variables[var].value)
             else:
-                seq[var] = '-1'
+                seq[var] = -1
         return seq
 
 def predator_display(seq):
     html = []
-    # variables                                                                                                  
-    backgroundColor = 'LightSkyBlue'
 
-    #if student completes level 0
-    if seq['Level'].value >= 1:
-        # if student makes 0 mistakes
-        if seq['Level 0 Incorrect Pick-ups'].value == 0:
-            backgroundColor = 'lime'
-            html.append('<h2 style="background-color:{1};"> This student completed Level 0 with no incorrect animal pickups</h2>'.format(seq['Level 0 Incorrect Pick-ups'].value, backgroundColor))
+    backgroundColor = 'LightBlue'
+
+    pprint.pprint(seq)
+
+    if seq['Level'] >= 1:
+        if seq['Level 0 Incorrect Pick-ups'] == 0: #perfect level
+            backgroundColor = 'LightGreen'
+            html.append('<h2 style="background-color:{0}">'.format(backgroundColor))
+            html.append('Congratulations! Level 0 was completed with no incorrect animal pickups')
+            html.append('</h2>')
         else:
-            html.append('<h2 style="background-color:{1};"> This student completed Level 0 with {0} incorrect animal pickups out of 1 possible incorrect animal pickups</h2>'.format(seq['Level 0 Incorrect Pick-ups'].value, backgroundColor))
-    #student did NOT complete Level 0
+            html.append('<h2 style="background-color:{0}">'.format(backgroundColor))
+            html.append('Level 0 was completedwith ')
+            html.append('{0} incorrect animal pick-ups'.format(seq['Level 0 Incorrect Pick-ups']))
+            html.append('</h2>')
     else:
-        html.append('<h2 style="background-color:{0};"> This student did not complete Level 0 </h2>'.format(backgroundColor))
+            html.append('<h2 style="background-color:{0}">'.format(backgroundColor))
+            html.append('Level 0 was not completed')
+            html.append('<h2>')
 
     html.append('<br>')
 
-    backgroundColor = 'LightSkyBlue'
-    #if student completes Level 1
-    if seq['Level'].value >= 2:
-        #if student does Level 1 w/ 0 mistakes
-        if seq['Level 1 Incorrect Pick-ups'].value == 0:
-            backgroundColor = 'lime'
-            html.append('<h2 style="background-color:{1}"> This student completed Level 1 with no incorrect animal pickups</h2>'.format(seq['Level 1 Incorrect Pick-ups'].value, backgroundColor))
-        else:
-            html.append('<h2 style="background-color:{1}"> This student completed Level 1 with {0} incorrect pickups out of 2 possible incorrect animal pickups</h2>'.format(seq['Level 1 Incorrect Pick-ups'].value, backgroundColor))
-    else:
-        html.append('<h2 style="background-color:{0}"> This student did not complete Level 1 </h2>'.format(backgroundColor))
+    backgroundColor = 'LightBlue'
     
+#if student completes Level 1
+    if seq['Level'] >= 2:
+        #if student does Level 1 w/ 0 mistakes
+        if seq['Level 1 Incorrect Pick-ups'] == 0:
+            backgroundColor = 'LightGreen'
+            html.append('<h2 style="background-color:{0}"> Congratulations! Level 1 was completed with no incorrect animal pickups</h2>'.format(backgroundColor))
+        else:
+            html.append('<h2 style="background-color:{0}">Level 1 was completed with {1} incorrect pickups out of 2 possible incorrect animal pickups</h2>'.format(backgroundColor,seq['Level 1 Incorrect Pick-ups'].value))
+    else:
+        html.append('<h2 style="background-color:{0}"> Level 1 was not completed</h2>'.format(backgroundColor))
+ 
     return ''.join(html)
