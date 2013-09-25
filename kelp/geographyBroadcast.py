@@ -122,6 +122,8 @@ def geography_display(results):
 
         #list of acceptable say / think blocks
         # this list needs to be check to make sure the categories are correct
+
+                                # TODO: check these are the right block names
         acceptedSayThinkBlocks = ['say:duration:elapsed:from:', 'say:',
                                   'think:duration:elapsed:from', 'think:']
 
