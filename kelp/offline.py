@@ -104,12 +104,14 @@ def main():
     # TODO: This does not look like it works correctly (should it fetch from
     #       lesson? Are those names mixed up?
     if project != None:
-        plugins[lesson].extend(plugins[project])
+        x = plugins[project][0]
+        plugins[lesson].insert(0,x)
     #plugins[lesson].extend(lessons.get(project, []))
 
     # set up kurt project
     octo = kurt.Project.load(path)
     octo.hairball_prepared = False
+
 
     # Prepare the output result
     html_list = [html_view(lesson)]
@@ -121,12 +123,14 @@ def main():
         results = plugin._process(octo)
         html_list.append(htmlwrappers[name](results))
 
+    
+
     # add on the closing html (to do)
     html_list.append('</body>')
     html_list.append('</html>')
 
     # write to the file (to do: change file and directory names)
-    with open('{0}_{1}.html'.format(lesson, project), 'w') as fp:
+    with open('{0}_{1}.html'.format(lesson,project), 'w') as fp:
         fp.write(''.join(html_list))
 
 if __name__ == '__main__':

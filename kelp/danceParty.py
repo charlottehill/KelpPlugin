@@ -137,6 +137,9 @@ class DancePartyProject(KelpPlugin):
             for attr in self.BLOCKMAPPING.keys():
                 #self.changes[sprite.name][attr] = []
                 self.checkInitialization(scratch, sprite.name, sprite.scripts, attr)
+
+        print('sprites dictionary')
+        print(self.sprites)
             
         return {'no dance': self.checkDance(scratch), 'changes': self.uninit_attr, 'sprites': self.sprites}
 
