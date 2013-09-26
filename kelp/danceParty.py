@@ -21,10 +21,10 @@ BASE_PATH = './results'
 
 def partition_scripts(scripts, start_type):
     """Return two lists of scripts out of the original `scripts` list.
-        
+
         Scripts that begin with a `start_type` block are returned first. All other
         scripts are returned second.
-        
+
         """
     match, other = [], []
     for script in scripts:
@@ -35,21 +35,21 @@ def partition_scripts(scripts, start_type):
     return match, other
 
 class DancePartyProject(KelpPlugin):
-    
+
     STATE_NOT_MODIFIED = 0
     STATE_MODIFIED = 1
     STATE_INITIALIZED = 2
-    
+
     def __init__(self):
         super(DancePartyProject, self).__init__()
-    
+
     def checkDance(self, scratch):
-        
+
         #initialize
         self.types = dict()
         for morph in scratch.sprites:
             self.types[morph.name] = set()
-        
+
         #go through the visible scripts and add the sprite with a costume change
         for sprite, script in KelpPlugin.iter_sprite_visible_scripts(scratch):
             if script.reachable:
@@ -59,24 +59,24 @@ class DancePartyProject(KelpPlugin):
                             self.types[sprite].add(script)
                             break
 
-        #if the sprite has no costume changes, it's dance isn't complete
+        #if the sprite has no costume changes, its dance isn't complete
         noDance = set()
         for sprite in self.types.keys():
             if not self.types[sprite]:
                 noDance.add(sprite)
-    
+
         #return list of sprites with an incomplete dance
         return noDance
 
     def checkInitialization(self, scratch, sprite, scripts, attribute):
         """Return the state of the scripts for the given attribute.
-            
+
             If there is more than one `when green flag clicked` script and they
             both modify the attribute, then the attribute is considered to not be
             initialized.
-            
+
             """
-        
+
         green_flag, other = partition_scripts(scripts, self.HAT_GREEN_FLAG)
         block_set = KelpPlugin.BLOCKMAPPING[attribute]
         state = self.STATE_NOT_MODIFIED
@@ -119,15 +119,15 @@ class DancePartyProject(KelpPlugin):
                     #self.changes[sprite][attribute].append((block, script))
                     self.uninit_attr[sprite].add(attribute)
                     state = self.STATE_MODIFIED
-            
+
         return self.uninit_attr
 
     def analyze(self, scratch):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
-        
+
         self.sprites = set()
-        
+
         self.uninit_attr = dict()
         for morph in scratch.sprites:
             self.uninit_attr[morph.name] = set()
@@ -140,15 +140,15 @@ class DancePartyProject(KelpPlugin):
 
         print('sprites dictionary')
         print(self.sprites)
-            
+
         return {'no dance': self.checkDance(scratch), 'changes': self.uninit_attr, 'sprites': self.sprites}
 
 def danceProj_display(results):
-    
+
     noDance = results['no dance']
     uninit_attr = results['changes']
     sprites = results['sprites']
-    
+
     html = []
     if not noDance:
         html.append('Your dances look great! Nice job!')
@@ -168,5 +168,5 @@ def danceProj_display(results):
         html.append('Nice job adding a new sprite!')
 
     print(html)
-    
+
     return ''.join(html)

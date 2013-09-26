@@ -101,8 +101,6 @@ def main():
         print('Lession `{}` not valid. Goodbye!'.format(lesson))
         sys.exit(1)
     # Add the project-specific plugins
-    # TODO: This does not look like it works correctly (should it fetch from
-    #       lesson? Are those names mixed up?
     if project != None:
         x = plugins[project][0]
         plugins[lesson].insert(0,x)
@@ -123,7 +121,7 @@ def main():
         results = plugin._process(octo)
         html_list.append(htmlwrappers[name](results))
 
-    
+
 
     # add on the closing html (to do)
     html_list.append('</body>')

@@ -22,10 +22,10 @@ BASE_PATH = './results'
 
 def partition_scripts(scripts, start_type):
     """Return two lists of scripts out of the original `scripts` list.
-        
+
         Scripts that begin with a `start_type` block are returned first. All other
         scripts are returned second.
-        
+
         """
     match, other = [], []
     for script in scripts:
@@ -36,27 +36,27 @@ def partition_scripts(scripts, start_type):
     return match, other
 
 class PlanetsProject(KelpPlugin):
-    
+
     def __init__(self):
         super(PlanetsProject, self).__init__()
-    
+
     def checkSpriteName(self,scratch):
-        
+
         self.costumes = set()
-    
+
         for sprite in scratch.sprites:
             for costume in sprite.costumes:
                 if costume.name.lower() != sprite.name.lower():
                     self.costumes.add(sprite)
         return self.costumes
-    
+
     def checkSayThink(self, scratch):
-        
+
         #initialize
         self.types = dict()
         for morph in scratch.sprites:
             self.types[morph.name] = set()
-        
+
         #go through the visible scripts and add the sprites with a say or think block that contain the sprite's name
         for sprite, script in KelpPlugin.iter_sprite_visible_scripts(scratch):
             if script.reachable:
@@ -67,7 +67,7 @@ class PlanetsProject(KelpPlugin):
                                 self.types[sprite].add(script)
                                 break
 
-        pprint.pprint(self.types)
+        #pprint.pprint(self.types)
 
         #if a sprite has no say or think block, their project isn't complete
         noSay = set()
@@ -76,7 +76,7 @@ class PlanetsProject(KelpPlugin):
                 if sprite != 'Sun':
                     if not self.types[sprite]:
                         noSay.add(sprite)
-    
+
         #return list of sprites without a say or think block
         return noSay
 
@@ -100,14 +100,14 @@ class PlanetsProject(KelpPlugin):
     def analyze(self, scratch):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
-            
+
         return {'no say': self.checkSayThink(scratch), 'sprite names': self.checkSpriteName(scratch), 'rocket blocks': self.checkRocket(scratch), 'thumbnails': self.thumbnails(scratch)}
 
 
 
 
 def planetProj_display(results):
-    
+
     noSay = results['no say']
     spriteNames = results['sprite names']
     pictures = results['thumbnails']
@@ -155,11 +155,11 @@ def planetProj_display(results):
                         elif whichBlock == 'down arrow' and blocks.args[0] >= 1:
                             rocketDict['down arrow']['forward'] = True
 
-    print('ROCKET DICT')
-    pprint.pprint(rocketDict)
+    #print('ROCKET DICT')
+    #pprint.pprint(rocketDict)
 
-    print('rocketBlocks')
-    pprint.pprint(rocketBlocks)
+    #print('rocketBlocks')
+    #pprint.pprint(rocketBlocks)
 
     backgroundColor = 'LightBlue'
 
@@ -168,15 +168,15 @@ def planetProj_display(results):
     rocketCongratulations = False
 
     for arrows, characteristics in rocketDict.items():
-        print('boolean')
-        print(characteristics['forward'])
+        #print('boolean')
+        #print(characteristics['forward'])
         for titles, booleans in characteristics.items():
             if booleans == False:
                 rocketCongratulations = False
                 break
             elif booleans == True:
                 rocketCongratulations = True
-    
+
 
     spriteCongratulations =  not noSay and not spriteNames
 
@@ -184,28 +184,28 @@ def planetProj_display(results):
         backgroundColor = 'LightGreen'
 
     html.append('<h2> Rocket  Double Check </h2>')
-            
-        # Table                                                                 
+
+        # Table
     html.append('<table border="1">')
     html.append('<tr>')
-            
-        #first cell                                                             
+
+        #first cell
     html.append('<td style="text-align:center;">')
     html.append('Rocket')
     html.append('<br>')
     html.append('<img src="{0}" height="100" width="100" style="float:center;">'.format(pictures['Rocket']))
     html.append('</td>')
-            
-            
-    #second cell                                                            
+
+
+    #second cell
     html.append('<td style="border:none;padding-left:20px;padding-right:20px;background-color:{0}">'.format(backgroundColor))
     if rocketCongratulations:
         html.append('<h3>Congratulations! This sprite is correct<h3>')
     else:
         html.append('<h3>This sprite still needs some work</h3>')
-                
+
     html.append('</td>')
-        
+
     html.append('</tr>')
     html.append('</table>')
 
@@ -217,26 +217,26 @@ def planetProj_display(results):
     for spriteName in rocketBlocks.keys():
         if spriteName!= 'Rocket':
             html.append('<h2> {0}  Double Check </h2>'.format(spriteName))
-            
-        # Table                                                                 
+
+        # Table
             html.append('<table border="1">')
             html.append('<tr>')
-            
-        #first cell                                                             
+
+        #first cell
             html.append('<td style="text-align:center;">')
             html.append('{0}'.format(spriteName))
             html.append('<br>')
             html.append('<img src="{0}" height="100" width="100" style="float:center;">'.format(pictures[spriteName]))
             html.append('</td>')
-            
-            
-    #second cell                                                            
+
+
+    #second cell
             html.append('<td style="border:none;padding-left:20px;padding-right:20px;background-color:{0}">'.format(backgroundColor))
             if spriteCongratulations:
                 html.append('<h3>Congratulations! This sprite is correct<h3>')
             else:
                 html.append('<h3>This sprite still needs some work</h3>')
-                
+
             html.append('</td>')
 
             html.append('</tr>')
