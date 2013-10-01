@@ -40,206 +40,100 @@ class PlanetsProject(KelpPlugin):
     def __init__(self):
         super(PlanetsProject, self).__init__()
 
-    def checkSpriteName(self,scratch):
+    # returns a boolean 
+    # true if the planet is correct, false otherwise
+    def checkPlanet(self, sprite):
+        correct = False
+        # check that the name is correct
+        if sprite.name.lower() == sprite.costumes[0].name.lower():
+            for script in sprite.scripts:
+                # check scripts that start with 'when sprite clicked'
+                if not isinstance(script, kurt.Comment):
+                    if KelpPlugin.script_start_type(script) == self.HAT_MOUSE:
+                        for name, _, block in self.iter_blocks(script):
+                            # find the say blocks
+                            if 'say' in name or 'think' in name:
+                                # check to see if it says the sprite's name
+                                if sprite.name.lower() in block.args[0].lower():
+                                    correct = True
+                                    break
+        return correct
 
-        self.costumes = set()
-
-        for sprite in scratch.sprites:
-            for costume in sprite.costumes:
-                if costume.name.lower() != sprite.name.lower():
-                    self.costumes.add(sprite)
-        return self.costumes
-
-    def checkSayThink(self, scratch):
-
-        #initialize
-        self.types = dict()
-        for morph in scratch.sprites:
-            self.types[morph.name] = set()
-
-        #go through the visible scripts and add the sprites with a say or think block that contain the sprite's name
-        for sprite, script in KelpPlugin.iter_sprite_visible_scripts(scratch):
-            if script.reachable:
-                if KelpPlugin.script_start_type(script) == self.HAT_MOUSE:
-                    for name, _, block in self.iter_blocks(script):
-                        if 'say' in name or 'think' in name:
-                            if sprite.lower() in block.args[0].lower():
-                                self.types[sprite].add(script)
-                                break
-
-        #pprint.pprint(self.types)
-
-        #if a sprite has no say or think block, their project isn't complete
-        noSay = set()
-        for sprite in self.types.keys():
-            if sprite != 'Rocket':
-                if sprite != 'Sun':
-                    if not self.types[sprite]:
-                        noSay.add(sprite)
-
-        #return list of sprites without a say or think block
-        return noSay
-
+    # returns a boolean
+    # true if the rocket is correct, false otherwise
     def checkRocket(self, scratch):
+        rocket = False
+        for sprite in scratch.sprites:
+            if sprite.name == 'Rocket':
+                rocket = sprite
+        # if there's not a rocket sprite, return false
+        if not rocket:
+            return False
 
-        #make a dictionary to only look at Rocket Scripts
-        # that start with 'When Key Pressed' Hat Blocks
-        self.types = dict()
-        self.types[self.HAT_KEY] = dict()
-
-        for event in self.types.keys():
-            for morph in scratch.sprites:
-                    self.types[event][morph.name] = set()
-
-        for sprite, script in KelpPlugin.iter_sprite_visible_scripts(scratch):
-            if KelpPlugin.script_start_type(script) in self.types.keys():
-                self.types[KelpPlugin.script_start_type(script)][sprite].add(script)
-
-        return self.types[self.HAT_KEY]
+        # check the visible scripts
+        # there should be scripts for right, left and down
+        left = False
+        right = False
+        down = False
+        for script in rocket.scripts:
+            key = ''
+            direction = ''
+            move = False
+            if not isinstance(script, kurt.Comment):
+                for name, _, block in self.iter_blocks(script):
+                    if name == 'when %s key pressed':
+                        key = block.args[0]
+                    if name == 'point in direction %s':
+                        direction = block.args[0]
+                    if 'steps' in name and block.args[0] > 0:
+                        move = True
+            if move and key == 'left arrow' and direction == -90:
+                left = True
+            if move and key == 'right arrow' and direction == 90:
+                right = True
+            if move and key == 'down arrow' and direction == 180:
+                down = True
+        if left and right and down:
+            return True
+        else:
+            return False
 
     def analyze(self, scratch):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
 
-        return {'no say': self.checkSayThink(scratch), 'sprite names': self.checkSpriteName(scratch), 'rocket blocks': self.checkRocket(scratch), 'thumbnails': self.thumbnails(scratch)}
+        planets = dict()
+        for sprite in scratch.sprites:
+            if sprite.name != 'Rocket' and sprite.name != 'Sun':
+                planets[sprite.name] = self.checkPlanet(sprite)
 
-
+        rocket = self.checkRocket(scratch)
+        return {'planets': planets, 'rocket': rocket}
 
 
 def planetProj_display(results):
-
-    noSay = results['no say']
-    spriteNames = results['sprite names']
-    pictures = results['thumbnails']
-    rocketBlocks = results['rocket blocks']
-
-    rocketDict = {'left arrow': {'heading': False, 'forward': False},
-                  'right arrow': {'heading': False, 'forward': False},
-                  'down arrow': {'heading': False, 'forward': False},
-                  'up arrow': {'heading': False, 'forward': False}
-                  }
-
-    whichBlock = 'left arrow'
-
-    #rocket's logic
-    for sprites, sets in rocketBlocks.items():
-        if sprites == 'Rocket':
-            for scripts in sets:
-                for blocks in scripts:
-                    blockType = blocks.type.convert()
-                    if blockType.command == 'whenKeyPressed':
-                        if blocks.args[0] == 'left arrow':
-                            whichBlock = 'left arrow'
-                        if blocks.args[0] == 'right arrow':
-                            whichBlock = 'right arrow'
-                        if blocks.args[0] == 'up arrow':
-                            whichBlock = 'up arrow'
-                        if blocks.args[0] == 'down arrow':
-                            whichBlock = 'down arrow'
-                    elif blockType.command == 'heading:':
-                        if whichBlock == 'left arrow' and blocks.args[0] == -90:
-                            rocketDict['left arrow']['heading'] = True
-                        elif whichBlock == 'right arrow' and blocks.args[0] == 90:
-                            rocketDict['right arrow']['heading'] = True
-                        elif whichBlock == 'up arrow' and blocks.args[0] == -180:
-                            rocketDict['up arrow']['heading'] = True
-                        elif whichBlock == 'down arrow' and blocks.args[0] == 180:
-                            rocketDict['down arrow']['heading'] = True
-                    elif blockType.command == 'forward:':
-                        if whichBlock == 'left arrow' and blocks.args[0] >= 1:
-                            rocketDict['left arrow']['forward'] = True
-                        elif whichBlock == 'right arrow' and blocks.args[0] >= 1:
-                            rocketDict['right arrow']['forward'] = True
-                        elif whichBlock == 'up arrow' and blocks.args[0] >= 1:
-                            rocketDict['up arrow']['forward'] = True
-                        elif whichBlock == 'down arrow' and blocks.args[0] >= 1:
-                            rocketDict['down arrow']['forward'] = True
-
-    #print('ROCKET DICT')
-    #pprint.pprint(rocketDict)
-
-    #print('rocketBlocks')
-    #pprint.pprint(rocketBlocks)
-
-    backgroundColor = 'LightBlue'
-
     html = []
+    noerrors = True
 
-    rocketCongratulations = False
+    # check the rocket
+    if not results['rocket']:
+        noerrors = False
+        html.append('<h2 style="background-color:LightBlue">')
+        html.append('The rocket isn\'t done.')
+        html.append('<h2>')
 
-    for arrows, characteristics in rocketDict.items():
-        #print('boolean')
-        #print(characteristics['forward'])
-        for titles, booleans in characteristics.items():
-            if booleans == False:
-                rocketCongratulations = False
-                break
-            elif booleans == True:
-                rocketCongratulations = True
+    # check the planet
+    for planet, correct in results['planets'].items():
+        if not correct:
+            noerrors = False
+            html.append('<h2 style="background-color:LightBlue">')
+            html.append('{0} isn\'t done.'.format(planet))
+            html.append('<h2>')
 
-
-    spriteCongratulations =  not noSay and not spriteNames
-
-    if rocketCongratulations:
-        backgroundColor = 'LightGreen'
-
-    html.append('<h2> Rocket  Double Check </h2>')
-
-        # Table
-    html.append('<table border="1">')
-    html.append('<tr>')
-
-        #first cell
-    html.append('<td style="text-align:center;">')
-    html.append('Rocket')
-    html.append('<br>')
-    html.append('<img src="{0}" height="100" width="100" style="float:center;">'.format(pictures['Rocket']))
-    html.append('</td>')
-
-
-    #second cell
-    html.append('<td style="border:none;padding-left:20px;padding-right:20px;background-color:{0}">'.format(backgroundColor))
-    if rocketCongratulations:
-        html.append('<h3>Congratulations! This sprite is correct<h3>')
-    else:
-        html.append('<h3>This sprite still needs some work</h3>')
-
-    html.append('</td>')
-
-    html.append('</tr>')
-    html.append('</table>')
-
-    backgroundColor = 'LightBlue'
-
-    if spriteCongratulations:
-        backgroundColor = 'LightGreen'
-
-    for spriteName in rocketBlocks.keys():
-        if spriteName!= 'Rocket':
-            html.append('<h2> {0}  Double Check </h2>'.format(spriteName))
-
-        # Table
-            html.append('<table border="1">')
-            html.append('<tr>')
-
-        #first cell
-            html.append('<td style="text-align:center;">')
-            html.append('{0}'.format(spriteName))
-            html.append('<br>')
-            html.append('<img src="{0}" height="100" width="100" style="float:center;">'.format(pictures[spriteName]))
-            html.append('</td>')
-
-
-    #second cell
-            html.append('<td style="border:none;padding-left:20px;padding-right:20px;background-color:{0}">'.format(backgroundColor))
-            if spriteCongratulations:
-                html.append('<h3>Congratulations! This sprite is correct<h3>')
-            else:
-                html.append('<h3>This sprite still needs some work</h3>')
-
-            html.append('</td>')
-
-            html.append('</tr>')
-            html.append('</table>')
+    # check if there weren't any errors
+    if noerrors:
+        html.append('<h2 style="background-color:LightGreen">')
+        html.append('Great job! The rocket and all the planets are finished!')
+        html.append('<h2>')
 
     return ''.join(html)
