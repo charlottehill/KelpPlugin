@@ -32,7 +32,6 @@ class DancePartyProject(KelpPlugin):
             if not isinstance(script, kurt.Comment):
                 if KelpPlugin.script_start_type(script) == self.HAT_MOUSE:
                     for name, _, block in self.iter_blocks(script):
-                        print(name)
                        # check for a costume change
                         if 'costume' in name:
                             if timing2:
