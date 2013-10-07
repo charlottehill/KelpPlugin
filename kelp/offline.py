@@ -11,6 +11,7 @@ from . import predatorPrey
 from . import raceInitialization
 from . import geographyBroadcast
 from . import goldRush
+from . import bonus
 from octopi import OctopiPlugin  # noqa
 from optparse import OptionParser
 import kurt
@@ -39,7 +40,8 @@ plugins = {'sequential': [sequenceViewer.Sequence, sequenceViewer.Screenshot],
            'planets': [planets.PlanetsProject],
            'racing': [raceInitialization.raceInitialization],
            'cageobcast': [geographyBroadcast.geographyBroadcast],
-           'gold': [goldRush.GoldRush]}
+           'gold': [goldRush.GoldRush],
+           'bonus': [bonus.Bonus]}
 
 
 # 'ClassName': filename.displayfunction
@@ -54,7 +56,8 @@ htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'DancePartyProject': danceParty.danceProj_display,
                 'PlanetsProject': planets.planetProj_display,
                 'geographyBroadcast': geographyBroadcast.geography_display,
-                'GoldRush': goldRush.goldRush_display}
+                'GoldRush': goldRush.goldRush_display,
+                'Bonus': bonus.bonus_display}
 
 def html_view(title):
     html = []
