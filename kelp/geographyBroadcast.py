@@ -45,13 +45,19 @@ class geographyBroadcast(KelpPlugin):
                    'Sacramento': 'Sacramento',
                    'SanFrancisco': 'San Francisco'}
 
-        lat = {'SantaBarbara': '119w', 'LosAngeles': '118w',
-               'LakeTahoe': '119w', 'Fresno': '119w',
-               'Sacramento': '121w', 'SanFrancisco': '122w'}
+        lat = {'SantaBarbara': ('119w','118w', '120w'),
+               'LosAngeles': ('118w', '117w', '119w'),
+               'LakeTahoe': ('119w', '118w', '120w'),
+               'Fresno': ('119w', '118w', '120w'),
+               'Sacramento': ('121w', '120w', '122w'),
+               'SanFrancisco': ('122w', '121w', '123w')}
 
-        long = {'SantaBarbara': '34n', 'LosAngeles': '34n',
-                'LakeTahoe': '39n', 'Fresno': '37n',
-                'Sacramento': '39n', 'SanFrancisco': '37n'}
+        long = {'SantaBarbara': ('34n', '33n', '32n'),
+                'LosAngeles': ('34n', '33n', '35n'),
+                'LakeTahoe': ('39n', '38n', '40n'),
+                'Fresno': ('37n', '38n', '36n'),
+                'Sacramento': ('39n', '38n', '40n'),
+                'SanFrancisco': ('37n', '38n', '36n')}
 
         # does the car dive to these cities?
         drive = {'Santa Barbara': False, 'Los Angeles': False,
@@ -65,17 +71,23 @@ class geographyBroadcast(KelpPlugin):
 
         for script in scripts:
             # check for the message in the broadcasted messages dict
-            print(script[0].args[0])
             if script[0].args[0] in messages:
                 city = messages[script[0].args[0]]
                 for name, _, block in self.iter_blocks(script.blocks):
                     # check say block for name, latitude and longitude
                     if 'say' in name:
                         bubble = block.args[0].lower()
+                        latitude = False
+                        longitude = False
                         if sprites[city].lower() in bubble:
-                            if lat[city] in bubble:
-                                if long[city] in bubble:
-                                    say[sprites[city]] = True
+                            for val in lat[city]:
+                                if val in bubble:
+                                    latitude = True
+                            for val in long[city]:
+                                if val in bubble:
+                                    longitude = True
+                            say[sprites[city]] = latitude and longitude
+
                     # check go to block
                     elif 'go to %s' in name:
                         if city in block.args[0]:
