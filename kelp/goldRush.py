@@ -35,12 +35,12 @@ class GoldRush(KelpPlugin):
             time2 = False
             if not isinstance(script, kurt.Comment):
                 #greenflag: check for initialization of background
-                if script[0].type.text == 'when @greenFlag clicked':
+                if KelpPlugin.script_start_type(script) == self.HAT_GREEN_FLAG:
                     for block in script.blocks:
                         if block.type.text == 'switch backdrop to %s':
                             costumes.add(block.args[0])
                             initialized = True
-                elif script[0].type.text == 'when I receive %s':
+                elif KelpPlugin.script_start_type(script) == self.HAT_WHEN_I_RECEIVE:
                     if message2 == '':
                         message1 = script[0].args[0]
                     for name, _, block in self.iter_blocks(script.blocks):
@@ -76,14 +76,14 @@ class GoldRush(KelpPlugin):
         broadcast = False
         hide = False
         for script in scripts:
-            if script[0].type.text == 'when @greenFlag clicked':
+            if KelpPlugin.script_start_type(script) == self.HAT_GREEN_FLAG:
                 #check for placement and show
                 for block in script.blocks:
                     if block.type.text == 'show':
                         show = True
                     if block.type.text == 'go to x:%s y:%s':
                         init = True
-            elif script[0].type.text == 'when this sprite clicked':
+            elif KelpPlugin.script_start_type(script) == self.HAT_MOUSE:
                 for block in script.blocks:
                     if 'broadcast' in block.type.text:
                         broadcast = True
@@ -99,7 +99,7 @@ class GoldRush(KelpPlugin):
         broadcast = False
         hide2 = False
         for script in scripts:
-            if script[0].type.text == 'when @greenFlag clicked':
+            if KelpPlugin.script_start_type(script) == self.HAT_GREEN_FLAG:
                 for block in script.blocks:
                     if block.type.text == 'hide':
                         hide1 = True
@@ -109,7 +109,7 @@ class GoldRush(KelpPlugin):
                 for block in script.blocks:
                     if block.type.text == 'show':
                         show = True
-            elif script[0].type.text == 'when this sprite clicked':
+            elif KelpPlugin.script_start_type(script) == self.HAT_MOUSE:
                 for block in script.blocks:
                     name = block.type.text
                     if 'broadcast' in name:
@@ -147,7 +147,7 @@ class GoldRush(KelpPlugin):
 
         for script in scripts:
             if not isinstance(script, kurt.Comment):
-                if script[0].type.text == 'when I receive %s':
+                if KelpPlugin.script_start_type(script) == self.HAT_WHEN_I_RECEIVE:
                     for name, _, block in self.iter_blocks(script.blocks):
                         if name == 'hide':
                             hide = True
@@ -196,7 +196,7 @@ class GoldRush(KelpPlugin):
         for (name, _) in KelpPlugin.BLOCKMAPPING['position']:
             move.add(name)
         for script in scripts:
-            if script[0].type.text == 'when this sprite clicked':
+            if KelpPlugin.script_start_type(script) == self.HAT_MOUSE:
                 for name, _, block in self.iter_blocks(script.blocks):
                     # check for movement and time?
                     if name in move:
