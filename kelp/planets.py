@@ -41,22 +41,20 @@ class PlanetsProject(KelpPlugin):
         super(PlanetsProject, self).__init__()
 
     # returns a boolean 
-    # true if the planet is correct, false otherwise
+    # true if the planet's say bubble is correct, false otherwise
     def checkPlanet(self, sprite):
         correct = False
-        # check that the name is correct
-        if sprite.name.lower() == sprite.costumes[0].name.lower():
-            for script in sprite.scripts:
-                # check scripts that start with 'when sprite clicked'
-                if not isinstance(script, kurt.Comment):
-                    if KelpPlugin.script_start_type(script) == self.HAT_MOUSE:
-                        for name, _, block in self.iter_blocks(script):
-                            # find the say blocks
-                            if 'say' in name or 'think' in name:
-                                # check to see if it says the sprite's name
-                                if sprite.name.lower() in block.args[0].lower():
-                                    correct = True
-                                    break
+        for script in sprite.scripts:
+            # check scripts that start with 'when sprite clicked'
+            if not isinstance(script, kurt.Comment):
+                if KelpPlugin.script_start_type(script) == self.HAT_MOUSE:
+                    for name, _, block in self.iter_blocks(script):
+                        # find the say blocks
+                        if 'say' in name or 'think' in name:
+                            # check to see if it says the sprite's name
+                            if sprite.name.lower() in block.args[0].lower():
+                                correct = True
+                                break
         return correct
 
     # returns a boolean
@@ -105,7 +103,13 @@ class PlanetsProject(KelpPlugin):
         planets = dict()
         for sprite in scratch.sprites:
             if sprite.name != 'Rocket' and sprite.name != 'Sun':
-                planets[sprite.name] = self.checkPlanet(sprite)
+                # check that it was named correctly
+                if sprite.name.lower() == sprite.costumes[0].name.lower():
+                    name = True
+                else:
+                    name = False
+                # check the name and say bubble
+                planets[sprite.name] = (name, self.checkPlanet(sprite))
 
         rocket = self.checkRocket(scratch)
         return {'planets': planets, 'rocket': rocket}
@@ -123,11 +127,21 @@ def planetProj_display(results):
         html.append('<h2>')
 
     # check the planet
-    for planet, correct in results['planets'].items():
-        if not correct:
+    for planet, (name, say) in results['planets'].items():
+        if not name and not say:
             noerrors = False
             html.append('<h2 style="background-color:LightBlue">')
-            html.append('{0} isn\'t done.'.format(planet))
+            html.append('{0} isn\'t named correctly and it doesn\'t say its name when clicked.'.format(planet))
+            html.append('<h2>')
+        elif not name:
+            noerrors = False
+            html.append('<h2 style="background-color:LightBlue">')
+            html.append('{0} isn\'t named correctly.'.format(planet))
+            html.append('<h2>')
+        elif not say:
+            noerrors = False
+            html.append('<h2 style="background-color:LightBlue">')
+            html.append('{0} doesn\'t say its name when clicked.'.format(planet))
             html.append('<h2>')
 
     # check if there weren't any errors
