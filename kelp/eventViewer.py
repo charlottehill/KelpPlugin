@@ -85,11 +85,12 @@ def event_display(results):
             for sprite in sprites:
             	html.append('  <td>')
             	visible = ""
-            	hidden = ""
-                if event[sprite]['hidden']:
-                    for script in event[sprite]['hidden']:
-                    	hidden += KelpPlugin.to_scratch_blocks(sprite, script)
-                    html.append('<pre class="hidden"><p>{0}</p></pre>'.format(hidden))
+# took out hidden scripts so it's less confusing for students
+#            	hidden = ""
+#                if event[sprite]['hidden']:
+#                    for script in event[sprite]['hidden']:
+#                    	hidden += KelpPlugin.to_scratch_blocks(sprite, script)
+#                    html.append('<pre class="hidden"><p>{0}</p></pre>'.format(hidden))
             	if event[sprite]['visible']:
                     for script in event[sprite]['visible']:
                     	visible += KelpPlugin.to_scratch_blocks(sprite, script)
