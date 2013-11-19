@@ -40,59 +40,16 @@ class PlanetsProject(KelpPlugin):
     def __init__(self):
         super(PlanetsProject, self).__init__()
 
-    # returns a boolean 
-    # true if the planet's say bubble is correct, false otherwise
-    def checkPlanet(self, sprite):
-        correct = False
-        for script in sprite.scripts:
-            # check scripts that start with 'when sprite clicked'
-            if not isinstance(script, kurt.Comment):
-                if KelpPlugin.script_start_type(script) == self.HAT_MOUSE:
-                    for name, _, block in self.iter_blocks(script):
-                        # find the say blocks
-                        if 'say' in name or 'think' in name:
-                            # check to see if it says the sprite's name
-                            if sprite.name.lower() in block.args[0].lower():
-                                correct = True
-                                break
-        return correct
-
-    # returns a boolean
-    # true if the rocket is correct, false otherwise
-    def checkRocket(self, scratch):
-        rocket = False
-        for sprite in scratch.sprites:
-            if sprite.name == 'Rocket':
-                rocket = sprite
-        # if there's not a rocket sprite, return false
-        if not rocket:
-            return False
-
-        # check the visible scripts
-        # there should be scripts for right, left and down
-        left = False
-        right = False
-        down = False
-        for script in rocket.scripts:
-            key = ''
-            direction = ''
-            move = False
-            if not isinstance(script, kurt.Comment):
-                for name, _, block in self.iter_blocks(script):
-                    if name == 'when %s key pressed':
-                        key = block.args[0]
-                    if name == 'point in direction %s':
-                        direction = block.args[0]
-                    if 'steps' in name and block.args[0] > 0:
-                        move = True
-            if move and key == 'left arrow' and direction == -90:
-                left = True
-            if move and key == 'right arrow' and direction == 90:
-                right = True
-            if move and key == 'down arrow' and direction == 180:
-                down = True
-        if left and right and down:
-            return True
+    def checkApprox(self, actual, name):
+        if name[0] == actual[0]:
+            if actual == 'mercury':
+                if ('y' in name) or ('e' in name):
+                    return True
+            elif actual == 'mars':
+                if 'a' in name:
+                    return True
+            else:
+                return True
         else:
             return False
 
@@ -100,54 +57,45 @@ class PlanetsProject(KelpPlugin):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
 
-        planets = dict()
+        planets = {'Mercury': False, 'Venus': False,
+                       'Earth': False, 'Mars': False,
+                       'Jupiter': False, 'Saturn': False,
+                       'Uranus': False, 'Neptune': False}
         for sprite in scratch.sprites:
-            if sprite.name != 'Rocket' and sprite.name != 'Sun':
-                # check that it was named correctly
-                if sprite.name.lower() == sprite.costumes[0].name.lower():
-                    name = True
-                else:
-                    name = False
+            name = sprite.costumes[0].name.encode('ascii','ignore')
+            if name != 'Rocket' and name != 'Sun':
                 # check the name and say bubble
-                planets[sprite.name] = (name, self.checkPlanet(sprite))
-
-        rocket = self.checkRocket(scratch)
-        return {'planets': planets, 'rocket': rocket}
+                for script in sprite.scripts:
+                    # check scripts that start with 'when sprite clicked'
+                    if not isinstance(script, kurt.Comment):
+                        if KelpPlugin.script_start_type(script) == self.HAT_MOUSE:
+                            for blockname, _, block in self.iter_blocks(script):
+                                # find the say blocks
+                                if 'say' in blockname or 'think' in blockname:
+                                    # check to see if it says the sprite's name
+                                    if self.checkApprox(name.lower(), block.args[0].lower().encode('ascii','ignore')):
+                                        planets[name] = True
+        return planets
 
 
 def planetProj_display(results):
     html = []
-    noerrors = True
-
-    # check the rocket
-    if not results['rocket']:
-        noerrors = False
-        html.append('<h2 style="background-color:LightBlue">')
-        html.append('The rocket isn\'t done.')
-        html.append('<h2>')
+    negative = []
 
     # check the planet
-    for planet, (name, say) in results['planets'].items():
-        if not name and not say:
-            noerrors = False
-            html.append('<h2 style="background-color:LightBlue">')
-            html.append('{0} isn\'t named correctly and it doesn\'t say its name when clicked.'.format(planet))
+    for planet, correct in results.items():
+        if correct:
+            html.append('<h2 style="background-color:LightGreen">')
+            html.append('Great job making {0} say its name when clicked!'.format(planet))
             html.append('<h2>')
-        elif not name:
-            noerrors = False
-            html.append('<h2 style="background-color:LightBlue">')
-            html.append('{0} isn\'t named correctly.'.format(planet))
-            html.append('<h2>')
-        elif not say:
-            noerrors = False
-            html.append('<h2 style="background-color:LightBlue">')
-            html.append('{0} doesn\'t say its name when clicked.'.format(planet))
-            html.append('<h2>')
+        else:
+            negative.append('<h2 style="background-color:LightBlue">')
+            negative.append('It looks like {0} doesn\'t say its name when clicked.'.format(planet))
+            negative.append('<h2>')
 
-    # check if there weren't any errors
-    if noerrors:
-        html.append('<h2 style="background-color:LightGreen">')
-        html.append('Great job! The rocket and all the planets are finished!')
-        html.append('<h2>')
+    html.append('<br>')
+    if len(negative) > 0:
+        html.append('<h2>If you still have time...</h2>')
+        html.extend(negative)
 
     return ''.join(html)

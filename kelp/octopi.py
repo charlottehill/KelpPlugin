@@ -69,6 +69,7 @@ user_obj['ScriptableScratchMorph'] = UserObjectDef(1, 'BaseMorph',
 user_obj['ScratchStageMorph'] = UserObjectDef(
     7, 'ScriptableScratchMorph',
     user_objects_by_name['ScratchStageMorph'].defaults.copy())
+#update to 6
 user_obj['ScratchSpriteMorph'] = UserObjectDef(
     5, 'ScriptableScratchMorph',
     user_objects_by_name['ScratchSpriteMorph'].defaults.copy())

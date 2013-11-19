@@ -102,15 +102,21 @@ class raceInitialization(KelpPlugin):
 
 def initialization_display(sprites):
     html = []
-    if False in sprites.values():
-        for name, initialized in sprites.items():
-            if not initialized:
-                html.append('<h2 style="background-color:LightBlue">')
-                html.append('You still need to initialize the {0} sprite.'.format(name))
-                html.append('<h2>')
-    else:
-        html.append('<h2 style="background-color:LightGreen">')
-        html.append('Great job! You initialized all the sprites!')
-        html.append('<h2>')
+    negative = []
+    for name, initialized in sprites.items():
+        if not initialized:
+            negative.append('<h2 style="background-color:LightBlue">')
+            negative.append('You still need to initialize the {0} sprite.'.format(name))
+            negative.append('<h2>')
+        else:
+            html.append('<h2 style="background-color:LightGreen">')
+            html.append('Great job initializing the {0} sprite!'.format(name))
+            html.append('<h2>')
+
+    html.append('<br>')
+    if len(negative) > 0:
+        html.append('<h2>If you still have time...</h2>')
+        html.extend(negative)
+
     return ''.join(html)
 

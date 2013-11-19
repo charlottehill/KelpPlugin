@@ -12,6 +12,8 @@ from . import raceInitialization
 from . import geographyBroadcast
 from . import goldRush
 from . import bonus
+from . import rocket
+from . import plants
 from octopi import OctopiPlugin  # noqa
 from optparse import OptionParser
 import kurt
@@ -27,7 +29,7 @@ lessons = {'sequential': frozenset(['predatorprey', 'egypt', 'thanksgiving']),
            'costumes': frozenset(['racing', 'dance']),
            'scenes': frozenset(['goldrush'])}
 
-plugins = {'sequential': [sequenceViewer.Sequence, sequenceViewer.Screenshot],
+plugins = {'sequential': [ sequenceViewer.Screenshot],
            'events': [eventViewer.Events, sequenceViewer.Screenshot],
            'initialization': [initializationViewer.Initialization,
                               eventViewer.Events],
@@ -41,6 +43,8 @@ plugins = {'sequential': [sequenceViewer.Sequence, sequenceViewer.Screenshot],
            'racing': [raceInitialization.raceInitialization],
            'cageobcast': [geographyBroadcast.geographyBroadcast],
            'gold': [goldRush.GoldRush],
+           'rocket': [rocket.Rocket],
+           'plants': [plants.Plants],
            'bonus': [bonus.Bonus]}
 
 
@@ -57,6 +61,8 @@ htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'PlanetsProject': planets.planetProj_display,
                 'geographyBroadcast': geographyBroadcast.geography_display,
                 'GoldRush': goldRush.goldRush_display,
+                'Plants': plants.plant_display,
+                'Rocket': rocket.rocket_display,
                 'Bonus': bonus.bonus_display}
 
 def html_view(title):

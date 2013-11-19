@@ -67,7 +67,6 @@ class Initialization(KelpPlugin):
                     # the initialization zone
                     in_zone = False
                 if (name, 'absolute') in block_set:
-                    #print(name)
                     if in_zone and level == 0:  # Success!
                         if state == self.STATE_NOT_MODIFIED:
                             state = self.STATE_INITIALIZED

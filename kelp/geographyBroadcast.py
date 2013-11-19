@@ -147,31 +147,35 @@ class geographyBroadcast(KelpPlugin):
         return {'drive': drive, 'say': say}
 
 def geography_display(results):
-
-    congratulations = True
     html = []
+    negative = []
 
     # does the car say each city's name and location?
     for city, correct in results['say'].items():
-        if not correct:
-            congratulations = False
-            html.append('<h2 style="background-color:LightBlue">')
-            html.append('The car doesn\'t say {0}\'s name and location when {0} is clicked.'.format(city))
+        if correct:
+            html.append('<h2 style="background-color:LightGreen">')
+            html.append('Great job making the car say {0}!'.format(city))
             html.append('<h2>')
+        else:
+            negative.append('<h2 style="background-color:LightBlue">')
+            negative.append('It looks like the car doesn\'t say {0}\'s name and location when {0} is clicked.'.format(city))
+            negative.append('<h2>')
 
     # does the car drive to each city?
     for city, correct in results['drive'].items():
-        if not correct:
-            congratulations = False
-            html.append('<h2 style="background-color:LightBlue">')
-            html.append('The car doesn\'t go to {0} when {0} is clicked.'.format(city))
+        if correct:
+            html.append('<h2 style="background-color:LightGreen">')
+            html.append('Great job making the car drive to {0}!'.format(city))
             html.append('<h2>')
+        if not correct:
+            negative.append('<h2 style="background-color:LightBlue">')
+            negative.append('It looks like the car doesn\'t go to {0} when {0} is clicked.'.format(city))
+            negative.append('<h2>')
 
-    # if all three things are done properly
-    if congratulations:
-        html.append('<h2 style="background-color:LightGreen">')
-        html.append('Great job! The car goes to all the cities and says their names!')
-        html.append('<h2>')
+    html.append('<br>')
+    if len(negative) > 0:
+        html.append('<h2>If you still have time...</h2>')
+        html.extend(negative)
 
     return ''.join(html)
 

@@ -8,15 +8,10 @@ import sys
 import kurt
 import PIL
 import pprint
+import math
 
 '''How to run this plugin:
-        hairball -k <path>/octopi.py -d <folder where sequenceViewer is> -p sequenceViewer.Sequence test.sb
-        For example, if `octopi.py` and sequenceViewer are both in the directory where you are:
-    hairball -k octopi.py -d . -p sequenceViewer.Sequence test.sb
-    if sequenceViewer is in your directory but octopi.py is right outside of it:
-    hairball -k ../octopi.py -d . -p sequenceViewer.Sequence test.sb
-    If they're both right outside of it:
-    hairball -k ../octopi.py -d .. -p sequenceViewer.Sequence test.sb
+kelp <project file> sequential predator
 '''
 
 
@@ -28,50 +23,79 @@ class Predator(KelpPlugin):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
 
-        seq = dict()
+        pickedup = {'Horse': False, 'Bear': False,
+                    'Snake': False, 'Zebra': False}
+        # locations of all the animals
+        locations = {'Horse': (128, -26), 'Bear': (51, 91),
+                    'Snake': (134, -126), 'Zebra': (-143, -115)}
 
-        #store the values for the variables level, points, and health if they exist
+        # find the script we need
+        script = []
+        for sprite in scratch.sprites:
+            if sprite.name =="Net":
+                #assume there's only one script
+                script = sprite.scripts[0]
 
-        name = ['Level', 'Points', 'Health', 'Level 0 Incorrect Pick-ups', 'Level 1 Incorrect Pick-ups']
+        # net's position is initialized in a hidden script
+        (x1, y1) = (-190, 72)
+        (x2, y2) = (x1, y1)
+        direction = 90
 
-        for var in name:
-            if var in scratch.variables.keys():
-                #print(scratch.variables[var])
-                seq[var] = int(scratch.variables[var].value)
-            else:
-                seq[var] = -1
-        return seq
+        # iterate through the script and calculate where the net goes
+        for name, _, block in self.iter_blocks(script):
+            if name == "point in direction %s":
+                direction = block.args[0]
+            elif name == "turn @turnRight %s degrees":
+                direction = direction + block.args[0]
+            elif name == "turn @turnLeft %s degrees":
+                direction = direction - block.args[0]
+            elif name == "glide %s steps":
+                # calculate next location
+                x2 = x1 + math.cos(direction)*block.args[0]
+                y2 = y1 + math.sin(direction)*block.args[0]
+                # check line
+                for animal, (x3, y3) in locations.items():
+                    if not pickedup[animal]:
+                        #check if point3 is close to the line
+                        distance = math.fabs((x2-x1)*(y1-y3)-(x1-x3)*(y2-y1))
+                        denominator = (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)
+                        if denominator == 0:
+                            distance = 100000 #infinity
+                        else:
+                            distance = distance / math.sqrt(denominator)
+                        #check if the distance between point3 and the line < 50
+                        if distance < 50:
+                            pickedup[animal] = True
+                (x1, y1) = (x2, y2)
+
+        return pickedup
 
 def predator_display(seq):
     html = []
-
-    if seq['Level'] >= 1:
-        if seq['Level 0 Incorrect Pick-ups'] == 0: #perfect level
-            html.append('<h2 style="background-color:LightGreen">')
-            html.append('Congratulations! Level 0 was completed with no incorrect animal pickups.')
-            html.append('</h2>')
+    negative = []
+    for name, pickedup in seq.items():
+        if name == 'Snake':
+            if pickedup:
+                negative.append('<h2 style="background-color:LightBlue">')
+                negative.append('Are you sure that a snake is a mammal?')
+                negative.append('</h2>')
+            else:
+                html.append('<h2 style="background-color:LightGreen">')
+                html.append('Great job avoiding the snake!')
+                html.append('</h2>')
         else:
-            html.append('<h2 style="background-color:LightBlue">')
-            html.append('Level 0 was completed with ')
-            html.append('{0} incorrect animal pick-ups.'.format(seq['Level 0 Incorrect Pick-ups']))
-            html.append('</h2>')
-    else:
-        html.append('<h2 style="background-color:LightBlue">')
-        html.append('Level 0 was not completed.')
-        html.append('<h2>')
+            if pickedup:
+                html.append('<h2 style="background-color:LightGreen">')
+                html.append('Great job picking up the {0}!'.format(name))
+                html.append('</h2>')
+            else:
+                negative.append('<h2 style="background-color:LightBlue">')
+                negative.append('It looks like you didn\'t pick up the {0}. Is it a mammal?'.format(name))
+                negative.append('</h2>')
 
     html.append('<br>')
-
-#if student completes Level 1
-    if seq['Level'] >= 2:
-        #if student does Level 1 w/ 0 mistakes
-        if seq['Level 1 Incorrect Pick-ups'] == 0:
-            html.append('<h2 style="background-color:LightGreen"> Congratulations! Level 1 was completed with no incorrect animal pickups.</h2>')
-        else:
-            html.append('<h2 style="background-color:LightGreen">')
-            html.append('Level 1 was completed with {0} incorrect pickups')
-            html.appnd(' out of 2 possible incorrect animal pickups.</h2>'.format(seq['Level 1 Incorrect Pick-ups']))
-    else:
-        html.append('<h2 style="background-color:LightBlue"> Level 1 was not completed.</h2>')
+    if len(negative) > 0:
+        html.append('<h2>If you still have time...</h2>')
+        html.extend(negative)
 
     return ''.join(html)

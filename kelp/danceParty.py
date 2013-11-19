@@ -53,46 +53,65 @@ class DancePartyProject(KelpPlugin):
             KelpPlugin.tag_reachable_scripts(scratch)
 
         # check initialization TO DO: is this working?
+        changes = dict()
         init = initializationViewer.Initialization()
         init = init.analyze(scratch)
+        for sprite, attrdict in init['changes'].items():
+            initialized = True
+            if sprite != 'Ballerina' and sprite != 'Stage':
+                for attribute in attrdict.values():
+                    if len(attribute) > 0:
+                        initialized = False
+                changes[sprite] = initialized
+
 
         # check the sprites' dances
         dance = dict()
         for sprite in scratch.sprites:
-            dance[sprite.name] = self.checkDance(sprite)
+            if sprite.name != 'Ballerina':
+                dance[sprite.name] = self.checkDance(sprite)
 
-        return {'dance': dance, 'changes': init['changes']}
+        return {'dance': dance, 'changes': changes}
 
 def danceProj_display(results):
-    congratulations = True
     html = []
+    negative = []
+    congratulations = True
 
     # initialization
     for sprite, correct in results['changes'].items():
-        if not correct:
+        if correct:
+            html.append('<h2 style="background-color:LightGreen">')
+            html.append('Great job initializing {0}!'.format(sprite))
+            html.append('</h2>')
+        else:
             congratulations = False
-            html.append('<h2 style="background-color:LightBlue">')
-            html.append('{0} still needs to be initialized.'.format(sprite))
+            negative.append('<h2 style="background-color:LightBlue">')
+            negative.append('{0} still needs to be initialized.'.format(sprite))
             html.append('</h2>')
 
     # dance
     for sprite, correct in results['dance'].items():
-        if not correct:
-            congratulations = False
-            html.append('<h2 style="background-color:LightBlue">')
-            html.append('{0} doesn\'t have a complete dance routine.'.format(sprite))
+        if correct:
+            html.append('<h2 style="background-color:LightGreen">')
+            html.append('Great job making a dance routine for {0}!'.format(sprite))
             html.append('</h2>')
+        else:
+            congratulations = False
+            negative.append('<h2 style="background-color:LightBlue">')
+            negative.append('{0} doesn\'t have a complete dance routine.'.format(sprite))
+            negative.append('</h2>')
 
-    # finished
+    # finished: check bonus
     if congratulations:
-        html.append('<h2 style="background-color:LightGreen">')
-        html.append('Great job! All the sprites have dance routines.')
-        html.append('</h2>')
+        if len(results['dance'].keys()) < 4:
+            negative.append('<h2 style="background-color:LightBlue">')
+            negative.append('Great job! All the sprites have dance routines. Try adding another sprite!')
+            negative.append('</h2>')
 
-    #bonus
-    if len(results['dance'].keys()) < 4:
-        html.append('<h2 style="background-color:LightBlue">')
-        html.append('Try adding another sprite!')
-        html.append('</h2>')
+    html.append('<br>')
+    if len(negative) > 0:
+        html.append('<h2>If you still have time...</h2>')
+        html.extend(negative)
 
     return ''.join(html)
