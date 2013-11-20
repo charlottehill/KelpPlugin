@@ -111,10 +111,6 @@ def plant_display(results):
     html = []
     negative = []
 
-#scenes = {'renamed':False, 'initialized': {'Stage':False, 'Cloud':False, 'Sun':False, 'Button':False},
-#                  'raining': {'show': False, 'background': False},
-#                  'sunny': {'show': False, 'hide': False, 'background': False
-
     # renamed sprites?
     if results['renamed']:
         html.append('<h2 style="background-color:LightBlue">')
@@ -125,12 +121,10 @@ def plant_display(results):
     for sprite, correct in results['initialized'].items():
         if correct:
             html.append('<h2 style="background-color:LightGreen">')
-            html.append('Great job initializing {0}!'.format(sprite))
-            html.append('</h2>')
+            html.append('Great job initializing the {0} sprite!</h2>'.format(sprite))
         else:
             negative.append('<h2 style="background-color:LightBlue">')
-            negative.append('It looks like {0} still needs to be initialized.'.format(sprite))
-            negative.append('</h2>')
+            negative.append('It looks like the {0} sprite still needs to be initialized.</h2>'.format(sprite))
 
     #raining
     if results['raining']['background']:
@@ -138,13 +132,13 @@ def plant_display(results):
          html.append('Great job changing the stage in the rain scene!</h2>')
     else:
         negative.append('<h2 style="background-color:LightBlue">')
-        negative.append('It looks like the stage doesn\'t change to the sapling background</h2>')
+        negative.append('It looks like the stage doesn\'t change in the rain scene.</h2>')
     if results['raining']['show']:
         html.append('<h2 style="background-color:LightGreen">')
-        html.append('Great job making the button show up!</h2>')
+        html.append('Great job making the button show after it rains!</h2>')
     else:
         negative.append('<h2 style="background-color:LightBlue">')
-        negative.append('It looks like the button never shows up.</h2>')
+        negative.append('It looks like the button doesn\t show up after it rains.</h2>')
 
     #sunny
     if results['sunny']['background']:
@@ -152,19 +146,19 @@ def plant_display(results):
          html.append('Great job changing the stage in the sunny scene!</h2>')
     else:
         negative.append('<h2 style="background-color:LightBlue">')
-        negative.append('It looks like the stage doesn\'t change to the Flower background.</h2>')
+        negative.append('It looks like the stage doesn\'t change in the sunny scene.</h2>')
     if results['sunny']['show']:
         html.append('<h2 style="background-color:LightGreen">')
         html.append('Great job making the Sun show in the sunny scene!</h2>')
     else:
         negative.append('<h2 style="background-color:LightBlue">')
-        negative.append('It looks like the Sun doesn\'t show up.</h2>')
+        negative.append('It looks like the Sun doesn\'t show in the sunny scene.</h2>')
     if results['sunny']['hide']:
         html.append('<h2 style="background-color:LightGreen">')
         html.append('Great job making the cloud hide in the sunny scene!</h2>')
     else:
         negative.append('<h2 style="background-color:LightBlue">')
-        negative.append('It looks like the cloud doesn\'t hide.</h2>')
+        negative.append('It looks like the cloud doesn\'t hide in the sunny scene.</h2>')
 
     html.append('<br>')
     if len(negative) > 0:
