@@ -22,13 +22,13 @@ class Plants(KelpPlugin):
             KelpPlugin.tag_reachable_scripts(scratch)
 
         scenes = {'renamed':False,
-                  'initialized': {'Stage':False, 'Cloud':False, 'Sun':False, 'Button':False},
+                  'initialized': {'Sun':False, 'Button':False},
                   'raining': {'show': False, 'background': False},
                   'sunny': {'show': False, 'hide': False, 'background': False}}
 
         sprites = {'green flag':dict(), 'receive':dict(), 'clicked':dict()}
         for sprite in scratch.sprites + [scratch.stage]:
-            if sprite.name not in scenes['initialized'].keys():
+            if sprite.name not in ['Sun', 'Stage', 'Button', 'Cloud']:
                 return {'renamed': True}
             for category in sprites.keys():
                 sprites[category][sprite.name] = set()
@@ -41,8 +41,17 @@ class Plants(KelpPlugin):
                     elif KelpPlugin.script_start_type(script) == self.HAT_WHEN_I_RECEIVE:
                         sprites['receive'][sprite.name].add(script)
                     
-        #check green flag?
-
+        #check green flag for the sun and the button
+        # the sun should start with Rays costume
+        for script in sprites['green flag']['Sun']:
+             for name, _, block in self.iter_blocks(script):
+                 if name == 'switch costume to %s' and block.args[0] == 'Rays':
+                     scenes['initialized']['Sun'] = True
+        # the button should hide
+        for script in sprites['green flag']['Button']:
+            for name, _, block in self.iter_blocks(script):
+                if name == 'hide':
+                    scenes['initialized']['Button'] = True
 
         # check cloud clicked
         costume = False
@@ -50,7 +59,7 @@ class Plants(KelpPlugin):
         for script in sprites['clicked']['Cloud']:
             for name, _, block in self.iter_blocks(script):
                 if name == 'switch costume to %s' and block.args[0] == 'Raining':
-                    costume = True
+                   costume = True
                 if costume and name == 'broadcast %s':
                     broadcast = block.args[0]
                     break
@@ -66,7 +75,7 @@ class Plants(KelpPlugin):
             for script in sprites['receive']['Stage']:
                 if script[0].args[0] == broadcast:
                     for name, _, block in self.iter_blocks(script):
-                        if name == 'switch costume to %s' and block.args[0] == 'Sapling':
+                        if name == 'switch backdrop to %s' and block.args[0] == 'Sapling':
                             scenes['raining']['background'] = True
 
         # check button clicked
@@ -81,13 +90,22 @@ class Plants(KelpPlugin):
                     break
         #check sunny
         if broadcast:
-            hide = True
-            # the sun should show
-            # the cloud should hide
             # the stage should switch to background Flower
-            
-
-        return hide
+            for script in sprites['receive']['Stage']:
+                for name, _, block in self.iter_blocks(script):
+                    if name == 'switch backdrop to %s' and block.args[0] == 'Flower':
+                        scenes['sunny']['background'] = True
+            # the sun should show
+            for script in sprites['receive']['Sun']:
+                for name, _, block in self.iter_blocks(script):
+                    if name == 'show':
+                        scenes['sunny']['show'] = True
+            # the cloud should hide
+            for script in sprites['receive']['Cloud']:
+                for name, _, block in self.iter_blocks(script):
+                    if name == 'hide':
+                        scenes['sunny']['hide'] = True
+        return scenes
 
 def plant_display(results):
     html = []
@@ -114,7 +132,39 @@ def plant_display(results):
             negative.append('It looks like {0} still needs to be initialized.'.format(sprite))
             negative.append('</h2>')
 
+    #raining
+    if results['raining']['background']:
+         html.append('<h2 style="background-color:LightGreen">')
+         html.append('Great job changing the stage in the rain scene!</h2>')
+    else:
+        negative.append('<h2 style="background-color:LightBlue">')
+        negative.append('It looks like the stage doesn\'t change to the sapling background</h2>')
+    if results['raining']['show']:
+        html.append('<h2 style="background-color:LightGreen">')
+        html.append('Great job making the button show up!</h2>')
+    else:
+        negative.append('<h2 style="background-color:LightBlue">')
+        negative.append('It looks like the button never shows up.</h2>')
 
+    #sunny
+    if results['sunny']['background']:
+         html.append('<h2 style="background-color:LightGreen">')
+         html.append('Great job changing the stage in the sunny scene!</h2>')
+    else:
+        negative.append('<h2 style="background-color:LightBlue">')
+        negative.append('It looks like the stage doesn\'t change to the Flower background.</h2>')
+    if results['sunny']['show']:
+        html.append('<h2 style="background-color:LightGreen">')
+        html.append('Great job making the Sun show in the sunny scene!</h2>')
+    else:
+        negative.append('<h2 style="background-color:LightBlue">')
+        negative.append('It looks like the Sun doesn\'t show up.</h2>')
+    if results['sunny']['hide']:
+        html.append('<h2 style="background-color:LightGreen">')
+        html.append('Great job making the cloud hide in the sunny scene!</h2>')
+    else:
+        negative.append('<h2 style="background-color:LightBlue">')
+        negative.append('It looks like the cloud doesn\'t hide.</h2>')
 
     html.append('<br>')
     if len(negative) > 0:
