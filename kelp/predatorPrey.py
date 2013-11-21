@@ -51,20 +51,26 @@ class Predator(KelpPlugin):
                 direction = direction - block.args[0]
             elif name == "glide %s steps":
                 # calculate next location
-                x2 = x1 + math.cos(direction)*block.args[0]
-                y2 = y1 + math.sin(direction)*block.args[0]
+                rad = math.radians(direction)
+                x2 = x1 + math.sin(rad)*block.args[0]
+                y2 = y1 + math.cos(rad)*block.args[0]
                 # check line
                 for animal, (x3, y3) in locations.items():
                     if not pickedup[animal]:
-                        #check if point3 is close to the line
-                        distance = math.fabs((x2-x1)*(y1-y3)-(x1-x3)*(y2-y1))
-                        denominator = (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)
-                        if denominator == 0:
-                            distance = 100000 #infinity
-                        else:
-                            distance = distance / math.sqrt(denominator)
-                        #check if the distance between point3 and the line < 50
-                        if distance < 50:
+                        # find the distance between the point and the line segment
+                        px = x2-x1
+                        py = y2-y1
+                        something = px*px + py*py
+                        u =  ((x3 - x1) * px + (y3 - y1) * py) / float(something)
+                        if u > 1:
+                            u = 1
+                        elif u < 0:
+                            u = 0                      
+                        dx = x1 + u * px - x3
+                        dy = y1 + u * py - y3
+                        distance = math.sqrt(dx*dx + dy*dy)
+                        #check if the distance between point3 and the line < 70
+                        if distance < 70:
                             pickedup[animal] = True
                 (x1, y1) = (x2, y2)
 
@@ -77,25 +83,25 @@ def predator_display(seq):
         if name == 'Snake':
             if pickedup:
                 negative.append('<h2 style="background-color:LightBlue">')
-                negative.append('Are you sure that a snake is a mammal?')
-                negative.append('</h2>')
+                negative.append('Are you sure that a snake is a mammal?</h2>')
             else:
                 html.append('<h2 style="background-color:LightGreen">')
-                html.append('Great job avoiding the snake!')
-                html.append('</h2>')
+                html.append('Great job avoiding the snake!</h2>')
         else:
             if pickedup:
                 html.append('<h2 style="background-color:LightGreen">')
-                html.append('Great job picking up the {0}!'.format(name))
-                html.append('</h2>')
+                html.append('Great job picking up the {0}!</h2>'.format(name))
             else:
                 negative.append('<h2 style="background-color:LightBlue">')
-                negative.append('It looks like you didn\'t pick up the {0}. Is it a mammal?'.format(name))
-                negative.append('</h2>')
+                negative.append('It looks like you didn\'t pick up the {0}. Is it a mammal?</h2>'.format(name))
 
     html.append('<br>')
     if len(negative) > 0:
         html.append('<h2>If you still have time...</h2>')
         html.extend(negative)
+    else:
+        html = []
+        html.append('<h2 style="background-color:LightGreen">')
+        html.append('Great job picking up all the mammals!</h2>')
 
     return ''.join(html)

@@ -80,22 +80,36 @@ class PlanetsProject(KelpPlugin):
 
 def planetProj_display(results):
     html = []
-    negative = []
+    correct = [] # correct planets
+    incorrect = []
 
-    # check the planet
-    for planet, correct in results.items():
-        if correct:
-            html.append('<h2 style="background-color:LightGreen">')
-            html.append('Great job making {0} say its name when clicked!'.format(planet))
-            html.append('<h2>')
+    for planet, say in results.items():
+        if say:
+            correct.append(planet)
         else:
-            negative.append('<h2 style="background-color:LightBlue">')
-            negative.append('It looks like {0} doesn\'t say its name when clicked.'.format(planet))
-            negative.append('<h2>')
+            incorrect.append(planet)
 
-    html.append('<br>')
-    if len(negative) > 0:
+    if len(incorrect) == 0: #all correct
+        html.append('<h2 style="background-color:LightGreen">')
+        html.append('Great job making all the planets say their names when clicked!</h2>')
+    elif len(correct) == 0: #all incorrect
+        html.append('<h2 style="background-color:LightBlue">')
+        html.append('It looks like the planets don\'t say their names when clicked.</h2>')
+    else: #some correct and some incorrect
+        html.append('<h2 style="background-color:LightGreen">Great job making {0}'.format(correct[0]))
+        if len(correct) == 1: #one correct and the rest are incorrect
+            html.append(' say its name when clicked!</h2>')
+        else:
+            for n in range(len(correct)-2):
+                html.append(', {0}'.format(correct[n+1]))
+            html.append(' and {0} say their names when you click them!</h2>'.format(correct[-1]))
         html.append('<h2>If you still have time...</h2>')
-        html.extend(negative)
+        html.append('<h2 style="background-color:LightBlue">It looks like {0}'.format(incorrect[0]))
+        if len(incorrect) == 1: #one is incorrect and the rest are correct
+            html.append(' doesn\'t say its name when clicked.</h2>')
+        else:
+            for n in range(len(incorrect)-2):
+                html.append(', {0}'.format(incorrect[n+1]))
+            html.append(' and {0} don\'t say their names when you click them.</h2>'.format(incorrect[-1]))
 
     return ''.join(html)
