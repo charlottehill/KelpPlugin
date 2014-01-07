@@ -36,7 +36,7 @@ class geographyBroadcast(KelpPlugin):
     # sprites = car's when I receive scripts
     # messages = dictionary
     # messages[city sprite name] = sprite's broadcast message
-    # coordinates = 
+    # coordinates = sprites' locations
     def car(self, scripts, messages, coordinates):
         sprites = {'SantaBarbara': 'Santa Barbara',
                    'LosAngeles': 'Los Angeles',
@@ -45,29 +45,15 @@ class geographyBroadcast(KelpPlugin):
                    'Sacramento': 'Sacramento',
                    'SanFrancisco': 'San Francisco'}
 
-        lat = {'SantaBarbara': ('119w','118w', '120w'),
-               'LosAngeles': ('118w', '117w', '119w'),
-               'LakeTahoe': ('119w', '118w', '120w'),
-               'Fresno': ('119w', '118w', '120w'),
-               'Sacramento': ('121w', '120w', '122w'),
-               'SanFrancisco': ('122w', '121w', '123w')}
-
-        long = {'SantaBarbara': ('34n', '33n', '32n'),
-                'LosAngeles': ('34n', '33n', '35n'),
-                'LakeTahoe': ('39n', '38n', '40n'),
-                'Fresno': ('37n', '38n', '36n'),
-                'Sacramento': ('39n', '38n', '40n'),
-                'SanFrancisco': ('37n', '38n', '36n')}
-
         # does the car dive to these cities?
         drive = {'Santa Barbara': False, 'Los Angeles': False,
                  'Lake Tahoe': False, 'Fresno': False,
                  'Sacramento': False, 'San Francisco': False}
 
         # does the car say the city's name and position?
-        say = {'Santa Barbara': False, 'Los Angeles':False,
-              'Lake Tahoe': False, 'Fresno':False,
-                 'Sacramento': False, 'San Francisco': False}
+        say = {'Santa Barbara': 2, 'Los Angeles':2,
+              'Lake Tahoe': 2, 'Fresno':2,
+                 'Sacramento': 2, 'San Francisco': 2}
 
         for script in scripts:
             # check for the message in the broadcasted messages dict
@@ -77,17 +63,24 @@ class geographyBroadcast(KelpPlugin):
                     # check say block for name, latitude and longitude
                     if 'say' in name:
                         bubble = block.args[0].lower()
-                        latitude = False
-                        longitude = False
                         if sprites[city].lower() in bubble:
-                            for val in lat[city]:
-                                if val in bubble:
-                                    latitude = True
-                            for val in long[city]:
-                                if val in bubble:
-                                    longitude = True
-                            say[sprites[city]] = latitude and longitude
-
+                            say[sprites[city]] = 0
+                        else:
+                            if bubble[0] == 's':
+                                if 'b' in bubble:
+                                    say['Santa Barbara'] = 1
+                                elif 'f' in bubble:
+                                    say['San Francisco'] = 1
+                                else:
+                                    say['Sacramento'] = 1
+                            elif bubble[0] =='l':
+                                if 'lake' in bubble:
+                                    say['Lake Tahoe'] = 1
+                                elif 'a' in bubble:
+                                    say['Los Angeles'] = 1
+                            elif bubble[0] == 'f':
+                                say['Fresno'] = 1
+                                                        
                     # check go to block
                     elif 'go to %s' in name:
                         if city in block.args[0]:
@@ -98,8 +91,6 @@ class geographyBroadcast(KelpPlugin):
                             if abs(block.args[1] - coordinates[city][1]) <=50:
                                 drive[sprites[city]] = True
                     elif 'glide %s secs to x:%s y:%s' in name:
-                        print(block.args[1], block.args[2])
-                        print(coordinates[city])
                         if abs(block.args[1] - coordinates[city][0]) <= 50:
                             if abs(block.args[2] - coordinates[city][1]) <=50:
                                 drive[sprites[city]] = True
@@ -148,34 +139,92 @@ class geographyBroadcast(KelpPlugin):
 
 def geography_display(results):
     html = []
-    negative = []
+    correct = []
+    spelling = []
+    incorrect = []
 
-    # does the car say each city's name and location?
-    for city, correct in results['say'].items():
-        if correct:
-            html.append('<h2 style="background-color:LightGreen">')
-            html.append('Great job making the car say {0}!'.format(city))
-            html.append('<h2>')
+    # does the car say each city's name?
+    html.append('<h1>Part 1: Make the car say each of the cities\' names</h1>')
+    for city, say in results['say'].items():
+        if say == 0:
+            correct.append(city)
+        elif say == 1:
+            spelling.append(city)
         else:
-            negative.append('<h2 style="background-color:LightBlue">')
-            negative.append('It looks like the car doesn\'t say {0}\'s name and location when {0} is clicked.'.format(city))
-            negative.append('<h2>')
+            incorrect.append(city)
 
-    # does the car drive to each city?
-    for city, correct in results['drive'].items():
-        if correct:
-            html.append('<h2 style="background-color:LightGreen">')
-            html.append('Great job making the car drive to {0}!'.format(city))
-            html.append('<h2>')
-        if not correct:
-            negative.append('<h2 style="background-color:LightBlue">')
-            negative.append('It looks like the car doesn\'t go to {0} when {0} is clicked.'.format(city))
-            negative.append('<h2>')
+    if len(incorrect) == 0 and len(correct) == 0: # all misspelled
+        html.append('<h2 style="background-color:LightBlue">')
+        html.append('Great job making the car say all the cities\' names!')
+        html.append(' It looks like you spelled the cities incorrectly.')
+        html.append(' If you have time, try checking your spelling.</h2>')
+    elif len(incorrect) == 0 and len(spelling) == 0: #all correct
+        html.append('<h2 style="background-color:LightGreen">')
+        html.append('Great job making the car say all the cities\' names!</h2>')
+    elif len(correct) == 0 and len(spelling) == 0: #all incorrect
+        html.append('<h2 style="background-color:LightBlue">')
+        html.append('It looks like the the car doesn\'t say the cities\' names when you click them.</h2>')
+    else: #some correct, some incorrect and some misspelled
+        if len(correct) != 0:
+            html.append('<h2 style="background-color:LightGreen">Great job making the car say {0}'.format(correct[0]))
+            if len(correct) == 1: #one correct and the rest are incorrect/misspelled
+                html.append(' when it\'s clicked!</h2>')
+            else:
+                for n in range(len(correct)-2):
+                    html.append(', {0}'.format(correct[n+1]))
+                html.append(' and {0} when they\'re clicked!</h2>'.format(correct[-1]))
+        if len(incorrect) != 0:
+            html.append('<h2>If you still have time...</h2>')
+            html.append('<h2 style="background-color:LightBlue">It looks like the car doesn\'t say {0}'.format(incorrect[0]))
+            if len(incorrect) == 1:
+                html.append(' when it\'s clicked.</h2>')
+            else:
+                for n in range(len(incorrect)-2):
+                    html.append(', {0}'.format(incorrect[n+1]))
+                html.append(' and {0} when you click them.</h2>'.format(incorrect[-1]))
+        if len(spelling) != 0:
+            html.append('<h2 style="background-color:LightBlue">It looks like you spelled {0}'.format(spelling[0]))
+            if len(spelling) == 1:
+                html.append('incorrectly</h2>')
+            else:
+                for n in range(len(spelling)-2):
+                    html.append(', {0}'.format(spelling[n+1]))
+                html.append(' and {0} incorrectly.</h2>'.format(spelling[-1]))
 
-    html.append('<br>')
-    if len(negative) > 0:
-        html.append('<h2>If you still have time...</h2>')
-        html.extend(negative)
+    # does the car drive to each city? 
+    html.append('<h1><br>Part 2: Make the car drive to each of the cities</h1>')
+    correct = []
+    incorrect = []
+    for city, drive in results['drive'].items():
+        if drive:
+            correct.append(city)
+        else:
+            incorrect.append(city)
 
+    if len(incorrect) == 0: # all correct
+        html.append('<h2 style="background-color:LightGreen">')
+        html.append('Great job making the car drive to all the cities!</h2>')
+    elif len(correct) == 0: # all incorrect
+        html.append('<h2 style="background-color:LightBlue">')
+        html.append('It looks like the the car doesn\'t drive to the cities when you click them.</h2>')
+    else: # some correct and some incorrect
+        if len(correct) != 0:
+            html.append('<h2 style="background-color:LightGreen">Great job making the car drive to {0}'.format(correct[0]))
+            if len(correct) == 1: #one correct and the rest are incorrect
+                html.append(' when you click on it!</h2>')
+            else:
+                for n in range(len(correct)-2):
+                    html.append(', {0}'.format(correct[n+1]))
+                html.append(' and {0} when they\'re clicked!</h2>'.format(correct[-1]))
+        if len(incorrect) != 0:
+            html.append('<h2>If you still have time...</h2>')
+            html.append('<h2 style="background-color:LightBlue">It looks like the car doesn\'t drive to {0}'.format(incorrect[0]))
+            if len(incorrect) == 1:
+                html.append(' when it\'s clicked.</h2>')
+            else:
+                for n in range(len(incorrect)-2):
+                    html.append(', {0}'.format(incorrect[n+1]))
+                html.append(' and {0} when you click them.</h2>'.format(incorrect[-1]))
+            
     return ''.join(html)
 

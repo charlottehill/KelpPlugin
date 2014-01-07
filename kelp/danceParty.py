@@ -52,7 +52,7 @@ class DancePartyProject(KelpPlugin):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
 
-        # check initialization TO DO: is this working?
+        # check initialization
         changes = dict()
         init = initializationViewer.Initialization()
         init = init.analyze(scratch)
@@ -76,42 +76,54 @@ class DancePartyProject(KelpPlugin):
 def danceProj_display(results):
     html = []
     negative = []
-    congratulations = True
 
     # initialization
-    for sprite, correct in results['changes'].items():
-        if correct:
+    if ('Cassy' in results['changes'].keys()) and ('CoolDude' in results['changes'].keys()):
+        if results['changes']['Cassy'] and results['changes']['CoolDude']:
             html.append('<h2 style="background-color:LightGreen">')
-            html.append('Great job initializing {0}!'.format(sprite))
-            html.append('</h2>')
+            html.append('Great job initializing Cassy and CoolDude!</h2>')
+        elif results['changes']['Cassy'] or results['changes']['CoolDude']:
+            for sprite, result in results['changes'].items():
+                if result:
+                    html.append('<h2 style="background-color:LightGreen">')
+                    html.append('Great job initializing {0}!</h2>'.format(sprite))
+                else:
+                    negative.append('<h2 style="background-color:LightBlue">')
+                    negative.append('It looks like you still need to initialize {0}.</h2>'.format(sprite))
         else:
-            congratulations = False
             negative.append('<h2 style="background-color:LightBlue">')
-            negative.append('{0} still needs to be initialized.'.format(sprite))
-            html.append('</h2>')
-
+            negative.append('It looks like you still need to initialize Cassy and CoolDude</h2>')
+    
     # dance
-    for sprite, correct in results['dance'].items():
-        if correct:
+    if ('Cassy' in results['dance'].keys()) and ('CoolDude' in results['dance'].keys()):
+        if results['dance']['Cassy'] and results['dance']['CoolDude']:
             html.append('<h2 style="background-color:LightGreen">')
-            html.append('Great job making a dance routine for {0}!'.format(sprite))
-            html.append('</h2>')
+            html.append('Great job making dance routines for Cassy and CoolDude!</h2>')
+        elif results['dance']['Cassy'] or results['dance']['CoolDude']:
+            for sprite, result in results['dance'].items():
+                if result:
+                    html.append('<h2 style="background-color:LightGreen">')
+                    html.append('Great job making a dance routine for {0}!</h2>'.format(sprite))
+                else:
+                    negative.append('<h2 style="background-color:LightBlue">')
+                    negative.append('It looks like {0} still needs a dance routine.</h2>'.format(sprite))
         else:
-            congratulations = False
             negative.append('<h2 style="background-color:LightBlue">')
-            negative.append('{0} doesn\'t have a complete dance routine.'.format(sprite))
-            negative.append('</h2>')
+            negative.append('It looks like you still need to make dance routines for Cassy and CoolDude.</h2>')
 
     # finished: check bonus
-    if congratulations:
-        if len(results['dance'].keys()) < 4:
+    if len(negative) == 0:
+        if len(html) == 0:
             negative.append('<h2 style="background-color:LightBlue">')
-            negative.append('Great job! All the sprites have dance routines. Try adding another sprite!')
-            negative.append('</h2>')
+            negative.append('Did you rename some of the sprites?')
+        else:
+            if len(results['dance'].keys()) < 4:
+                negative.append('<h2 style="background-color:LightBlue">')
+                negative.append('Great job! All the sprites have dance routines. Try adding another sprite!')
+                negative.append('</h2>')
 
-    html.append('<br>')
     if len(negative) > 0:
-        html.append('<h2>If you still have time...</h2>')
+        html.append('<br><h2>If you still have time...</h2>')
         html.extend(negative)
 
     return ''.join(html)

@@ -66,24 +66,27 @@ class PlanetsProject(KelpPlugin):
         return blocks
 
 
-
+    # return 0 if the name is spelled correctly
+    # return 1 if the name is spelled incorrectly
+    # return 2 if the name is wrong
     def checkApprox(self, actual, name):
+        if name == actual:
+            return 0
         if name[0] == actual[0]:
             if actual == 'mercury':
                 if ('y' in name) or ('e' in name):
-                    return True
+                    return 1
             elif actual == 'mars':
                 if 'a' in name:
-                    return True
+                    return 1
             else:
-                return True
+                return 1
         else:
-            return False
+            return 2
 
     def analyze(self, scratch):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
-
 
         # check rocket: if there's not a rocket sprite, return false 
         rocket = False
@@ -111,46 +114,63 @@ class PlanetsProject(KelpPlugin):
                                 # find the say blocks
                                 if 'say' in blockname or 'think' in blockname:
                                     # check to see if it says the sprite's name
-                                    if self.checkApprox(name.lower(), block.args[0].lower().encode('ascii','ignore')):
-                                        planets[name] = True
+                                    planets[name] =  self.checkApprox(name.lower(), block.args[0].lower().encode('ascii','ignore'))
         return {'rocket': blocks, 'planets': planets}
 
 
 def planetProj_display(results):
     html = []
+    negative = []
     correct = []
+    spelling = []
     incorrect = []
+
+    negative.append('<h2>If you still have time...</h2>')
 
     #planets
     for planet, say in results['planets'].items():
-        if say:
+        if say == 0:
             correct.append(planet)
+        elif say == 1:
+            spelling.append(planet)
         else:
             incorrect.append(planet)
 
-    if len(incorrect) == 0: #all correct
+    if len(incorrect) == 0 and len(correct) == 0: # all misspelled
+        html.append('<h2 style="background-color:LightBlue">')
+        html.append('Great job making all the planets say their names when clicked!')
+        negative.append(' It looks like you spelled the planets incorrectly. If you have time, try checking your spelling.</h2>')
+    elif len(incorrect) == 0 and len(spelling) == 0: #all correct
         html.append('<h2 style="background-color:LightGreen">')
         html.append('Great job making all the planets say their names when clicked!</h2>')
-    elif len(correct) == 0: #all incorrect
-        html.append('<h2 style="background-color:LightBlue">')
-        html.append('It looks like the planets don\'t say their names when clicked.</h2>')
-    else: #some correct and some incorrect
-        html.append('<h2 style="background-color:LightGreen">Great job making {0}'.format(correct[0]))
-        if len(correct) == 1: #one correct and the rest are incorrect
-            html.append(' say its name when clicked!</h2>')
-        else:
-            for n in range(len(correct)-2):
-                html.append(', {0}'.format(correct[n+1]))
-            html.append(' and {0} say their names when you click them!</h2>'.format(correct[-1]))
-        html.append('<h2>If you still have time...</h2>')
-        html.append('<h2 style="background-color:LightBlue">It looks like {0}'.format(incorrect[0]))
-        if len(incorrect) == 1: #one is incorrect and the rest are correct
-            html.append(' doesn\'t say its name when clicked.</h2>')
-        else:
-            for n in range(len(incorrect)-2):
-                html.append(', {0}'.format(incorrect[n+1]))
-            html.append(' and {0} don\'t say their names when you click them.</h2>'.format(incorrect[-1]))
-
+    elif len(correct) == 0 and len(spelling) == 0: #all incorrect
+        negative.append('<h2 style="background-color:LightBlue">')
+        negative.append('It looks like the planets don\'t say their names when clicked.</h2>')
+    else: #some correct and some incorrect and some misspelled
+        if len(correct) != 0:
+            html.append('<h2 style="background-color:LightGreen">Great job making {0}'.format(correct[0]))
+            if len(correct) == 1: #one correct and the rest are incorrect/misspelled
+                html.append(' say its name when clicked!</h2>')
+            else:
+                for n in range(len(correct)-2):
+                    html.append(', {0}'.format(correct[n+1]))
+                html.append(' and {0} say their names when you click them!</h2>'.format(correct[-1]))
+        if len(incorrect) != 0:
+            negative.append('<h2 style="background-color:LightBlue">It looks like {0}'.format(incorrect[0]))
+            if len(incorrect) == 1: #one is incorrect and the rest are correct/misspelled
+                negative.append(' doesn\'t say its name when clicked.</h2>')
+            else:
+                for n in range(len(incorrect)-2):
+                    html.append(', {0}'.format(incorrect[n+1]))
+                html.append(' and {0} don\'t say their names when you click them.</h2>'.format(incorrect[-1]))
+        if len(spelling) != 0:
+            negative.append('<h2 style="background-color:LightBlue">It looks like you spelled {0}'.format(spelling[0]))
+            if len(spelling) == 1:
+                negative.append('incorrectly</h2>')
+            else:
+                for n in range(len(spelling)-2):
+                    negative.append(', {0}'.format(spelling[n+1]))
+                negative.append(' and {0} incorrectly.</h2>'.format(spelling[-1]))
 
     #rocket
     correct = []
@@ -167,21 +187,22 @@ def planetProj_display(results):
         html.append('Great job making the rocket move in all directions!</h2>')
     # all incorrect
     elif len(incorrect) == 3:
-         html.append('<h2 style="background-color:LightBlue">')
-         html.append('It looks like the rocket still needs some work!</h2>')
+         negative.append('<h2 style="background-color:LightBlue">')
+         negative.append('It looks like the rocket still needs some work!</h2>')
     # 2 correct, 1 incorrect
     elif len(correct) == 2:
         html.append('<h2 style="background-color:LightGreen">')
         html.append('Great job making the rocket move {0} and {1}!</h2>'.format(correct[0], correct[1]))
-        html.append('<h2>If you still have time...</h2>')
-        html.append('<h2 style="background-color:LightBlue">')
-        html.append('It looks like the rocket doesn\'t go {0}</h2>'.format(incorrect[0]))
+        negative.append('<h2 style="background-color:LightBlue">')
+        negative.append('It looks like the rocket doesn\'t go {0}</h2>'.format(incorrect[0]))
     # 1 correct, 2 incorrect
     else:
         html.append('<h2 style="background-color:LightGreen">')
         html.append('Great job making the rocket move {0}!</h2>'.format(correct[0]))
-        html.append('<h2>If you still have time...</h2>')
-        html.append('<h2 style="background-color:LightBlue">')
-        html.append('It looks like the rocket doesn\'t go {0} or {1}</h2>'.format(incorrect[0], incorrect[1]))
+        negative.append('<h2 style="background-color:LightBlue">')
+        negative.append('It looks like the rocket doesn\'t go {0} or {1}</h2>'.format(incorrect[0], incorrect[1]))
+
+    if len(negative) > 1:
+        html.extend(negative)
 
     return ''.join(html)

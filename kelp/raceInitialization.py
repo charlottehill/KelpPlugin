@@ -102,23 +102,23 @@ class raceInitialization(KelpPlugin):
 
 def initialization_display(sprites):
     html = []
-    negative = []
-    for name, initialized in sprites.items():
-        if not initialized:
-            negative.append('<h2 style="background-color:LightBlue">')
-            negative.append('You still need to initialize the {0} sprite.<h2>'.format(name))
-        else:
-            html.append('<h2 style="background-color:LightGreen">')
-            html.append('Great job initializing the {0} sprite!<h2>'.format(name))
-
-    html.append('<br>')
-    if len(negative) > 0:
-        html.append('<h2>If you still have time...</h2>')
-        html.extend(negative)
-    else:
-        html = []
+    negative = ['<h2 style="background-color:LightBlue">']
+    if sprites['Cat'] and sprites['Rooster']:
         html.append('<h2 style="background-color:LightGreen">')
-        html.append('Great job initializing the rooster and the cat!<h2>')
+        html.append('Great job initializing the rooster and the cat!</h2>')
+    elif not sprites['Cat'] and not sprites['Rooster']:
+        negative.append('It looks like you still need to initialize the rooster and the cat.</h2>')
+    else:
+        for name, initialized in sprites.items():
+            if not initialized:
+                negative.append('It looks like you still need to initialize the {0}.</h2>'.format(name))
+            else:
+                html.append('<h2 style="background-color:LightGreen">')
+                html.append('Great job initializing the {0}!</h2>'.format(name))
+
+    if len(negative) > 1:
+        html.append('<br><h2>If you still have time...</h2>')
+        html.extend(negative)
 
     return ''.join(html)
 
