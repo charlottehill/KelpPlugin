@@ -46,7 +46,6 @@ plugins = {'sequential': [ sequenceViewer.Screenshot],
            'racing': [raceInitialization.raceInitialization],
            'cageobcast': [geographyBroadcast.geographyBroadcast],
            'gold': [goldRush.GoldRush],
-           'rocket': [rocket.Rocket],
            'plants': [plants.Plants],
            'bonus': [bonus.Bonus]}
 
@@ -67,7 +66,6 @@ htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'geographyBroadcast': geographyBroadcast.geography_display,
                 'GoldRush': goldRush.goldRush_display,
                 'Plants': plants.plant_display,
-                'Rocket': rocket.rocket_display,
                 'Bonus': bonus.bonus_display}
 
 def html_view(title):
