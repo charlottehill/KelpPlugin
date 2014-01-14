@@ -14,7 +14,6 @@ from . import raceInitialization
 from . import geographyBroadcast
 from . import goldRush
 from . import bonus
-from . import rocket
 from . import plants
 from octopi import OctopiPlugin  # noqa
 from optparse import OptionParser
