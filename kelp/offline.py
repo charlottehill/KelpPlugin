@@ -7,6 +7,8 @@ from . import initializationViewer
 from . import sequenceViewer
 from . import danceParty
 from . import planets
+from . import planetspart1
+from . import planetspart2
 from . import predatorPrey
 from . import raceInitialization
 from . import geographyBroadcast
@@ -40,6 +42,8 @@ plugins = {'sequential': [ sequenceViewer.Screenshot],
            'predator': [predatorPrey.Predator],
            'dance': [danceParty.DancePartyProject],
            'planets': [planets.PlanetsProject],
+           'part1': [planetspart1.PlanetsProjectPart1],
+           'part2': [planetspart2.PlanetsProjectPart2],
            'racing': [raceInitialization.raceInitialization],
            'cageobcast': [geographyBroadcast.geographyBroadcast],
            'gold': [goldRush.GoldRush],
@@ -59,6 +63,8 @@ htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'raceInitialization': raceInitialization.initialization_display,
                 'DancePartyProject': danceParty.danceProj_display,
                 'PlanetsProject': planets.planetProj_display,
+                'PlanetsProjectPart1': planetspart1.planetProj_display,
+                'PlanetsProjectPart2': planetspart2.planetProj_display,
                 'geographyBroadcast': geographyBroadcast.geography_display,
                 'GoldRush': goldRush.goldRush_display,
                 'Plants': plants.plant_display,

@@ -62,41 +62,72 @@ class Events(KelpPlugin):
         return {'events': self.types, 'thumbnails': self.thumbnails(scratch)}
 
 
+# Displays sprite names and pictures
 def event_display(results):
 	thumbnails = results['thumbnails']
 	events = results['events']
-        # Displays sprite names and pictures
         html = []
-        html.append('<h2> Starting Scripts Table </h2>')
-        html.append('<table border="1"><tr><th class=noBorder></th>')
         sprites = []
+
+        html.append('<h2> Starting Scripts Table </h2>')
+        html.append('<table>')
+        # start the first row
+        html.append('<tr>')
+        # headings
+        html.append('<th>Script Type</th>')
         for sprite in thumbnails.keys():
             if sprite != 'screen':
                 sprites.append(sprite)
-                html.append('    <th>{0}</th>'.format(sprite))
-        html.append('</tr>  <tr><td class="noBorder" ></td>')
-        for sprite in sprites:
-            html.append('    <td><img src="{0}" height="100" width="100" style="float:center"></td>'.format(thumbnails[sprite]))
+                # sprite name
+                html.append('<th>{0}</th>'.format(sprite))
+                # sprite thumbnail?
+
+        # end the first row
         html.append('</tr>')
+        # make a row for each event type
+        for event_type, event in events.items():
+            html.append('<tr>') # new row
+            html.append('<td>{0}</td>'.format(KelpPlugin.SCRIPT_TITLES[event_type])) # row header
+            for sprite in sprites:
+                html.append('<td><pre class="blocks"><p>')
+                if event[sprite]['visible']:
+                    for script in event[sprite]['visible']:
+                        html.append(KelpPlugin.to_scratch_blocks(sprite, script))
+                html.append('</p></pre></td>')
+            html.append('</tr>') # end row
+        html.append('</table>')
+        return ''.join(html)        
+
+#        html.append('<h2> Starting Scripts Table </h2>')
+#        html.append('<table border="1"><tr><th class=noBorder></th>')
+#        sprites = []
+#        for sprite in thumbnails.keys():
+#            if sprite != 'screen':
+#                sprites.append(sprite)
+#                html.append('    <th>{0}</th>'.format(sprite))
+#        html.append('</tr>  <tr><td class="noBorder" ></td>')
+#        for sprite in sprites:
+#            html.append('    <td><img src="{0}" height="100" width="100" style="float:center"></td>'.format(thumbnails[sprite]))
+#        html.append('</tr>')
 
         # Displays scripts
-        for event_type, event in events.items():
-            html.append('<tr style="height:30px;"><td style = "width:200px;" class = "noBorder" ><b>{0}</b></td>'.format(KelpPlugin.SCRIPT_TITLES[event_type]))
-            for sprite in sprites:
-            	html.append('  <td>')
-            	visible = ""
+#        for event_type, event in events.items():
+#            html.append('<tr style="height:30px;"><td style = "width:200px;" class = "noBorder" ><b>{0}</b></td>'.format(KelpPlugin.SCRIPT_TITLES[event_type]))
+#            for sprite in sprites:
+#            	html.append('  <td>')
+#            	visible = ""
 # took out hidden scripts so it's less confusing for students
 #            	hidden = ""
 #                if event[sprite]['hidden']:
 #                    for script in event[sprite]['hidden']:
 #                    	hidden += KelpPlugin.to_scratch_blocks(sprite, script)
 #                    html.append('<pre class="hidden"><p>{0}</p></pre>'.format(hidden))
-            	if event[sprite]['visible']:
-                    for script in event[sprite]['visible']:
-                    	visible += KelpPlugin.to_scratch_blocks(sprite, script)
-                    html.append('<pre class="blocks"><p>{0}</p></pre>'.format(visible))
-            	html.append('  </td>')
-            html.append('  </tr>')
-        html.append('  </table>')
-        return ''.join(html)
+#            	if event[sprite]['visible']:
+#                    for script in event[sprite]['visible']:
+#                    	visible += KelpPlugin.to_scratch_blocks(sprite, script)
+#                    html.append('<pre class="blocks"><p>{0}</p></pre>'.format(visible))
+#            	html.append('  </td>')
+#            html.append('  </tr>')
+#        html.append('  </table>')
+#        return ''.join(html)
 
