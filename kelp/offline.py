@@ -15,6 +15,8 @@ from . import geographyBroadcast
 from . import goldRush
 from . import bonus
 from . import plants
+from . import simple
+from . import complex
 from octopi import OctopiPlugin  # noqa
 from optparse import OptionParser
 import kurt
@@ -47,7 +49,9 @@ plugins = {'sequential': [ sequenceViewer.Screenshot],
            'cageobcast': [geographyBroadcast.geographyBroadcast],
            'gold': [goldRush.GoldRush],
            'plants': [plants.Plants],
-           'bonus': [bonus.Bonus]}
+           'bonus': [bonus.Bonus],
+		   'simple': [simple.SimpleMaze],
+		   'complex': [complex.ComplexMaze]}
 
 
 # 'ClassName': filename.displayfunction
@@ -66,7 +70,9 @@ htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'geographyBroadcast': geographyBroadcast.geography_display,
                 'GoldRush': goldRush.goldRush_display,
                 'Plants': plants.plant_display,
-                'Bonus': bonus.bonus_display}
+                'Bonus': bonus.bonus_display,
+				'SimpleMaze': simple.maze_display,
+				'ComplexMaze': complex.complex_MazeDisplay}
 
 def html_view(title):
     html = []
@@ -112,7 +118,7 @@ def main():
 
     # Verify the lesson
     if lesson not in plugins:
-        print('Lession `{}` not valid. Goodbye!'.format(lesson))
+        print('Lesson `{}` not valid. Goodbye!'.format(lesson))
         sys.exit(1)
     # Add the project-specific plugins
     if project != None:
