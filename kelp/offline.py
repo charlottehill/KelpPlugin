@@ -50,8 +50,8 @@ plugins = {'sequential': [ sequenceViewer.Screenshot],
            'gold': [goldRush.GoldRush],
            'plants': [plants.Plants],
            'bonus': [bonus.Bonus],
-		   'simple': [simple.SimpleMaze],
-		   'complex': [complex.ComplexMaze]}
+           'simple': [simple.SimpleMaze],
+           'complex': [complex.ComplexMaze]}
 
 
 # 'ClassName': filename.displayfunction
@@ -71,8 +71,8 @@ htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'GoldRush': goldRush.goldRush_display,
                 'Plants': plants.plant_display,
                 'Bonus': bonus.bonus_display,
-				'SimpleMaze': simple.maze_display,
-				'ComplexMaze': complex.complex_MazeDisplay}
+                'SimpleMaze': simple.maze_display,
+                'ComplexMaze': complex.complex_MazeDisplay}
 
 def html_view(title):
     html = []
