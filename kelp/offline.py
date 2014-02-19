@@ -17,6 +17,7 @@ from . import bonus
 from . import plants
 from . import simple
 from . import complex
+from . import module2Var
 from octopi import OctopiPlugin  # noqa
 from optparse import OptionParser
 import kurt
@@ -51,7 +52,8 @@ plugins = {'sequential': [ sequenceViewer.Screenshot],
            'plants': [plants.Plants],
            'bonus': [bonus.Bonus],
            'simple': [simple.SimpleMaze],
-           'complex': [complex.ComplexMaze]}
+           'complex': [complex.ComplexMaze],
+           'module2var': [module2Var.Module2Var]}
 
 
 # 'ClassName': filename.displayfunction
@@ -72,7 +74,8 @@ htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'Plants': plants.plant_display,
                 'Bonus': bonus.bonus_display,
                 'SimpleMaze': simple.maze_display,
-                'ComplexMaze': complex.complex_MazeDisplay}
+                'ComplexMaze': complex.complex_MazeDisplay,
+                'Module2Var': module2Var.Module2VarView}
 
 def html_view(title):
     html = []
