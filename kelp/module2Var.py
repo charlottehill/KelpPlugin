@@ -84,6 +84,7 @@ class Module2Var(KelpPlugin):
         elif ('glide' in name or 'move' in name):
             deltaX = block.args[0] * math.sin(curXYDir[2]*math.pi/180)
             deltaY = block.args[0] * math.cos(curXYDir[2]*math.pi/180)
+            #print ((str)(deltaX) + " " + (str)(deltaY))
             slope = deltaY/deltaX
             slopeY = deltaX/deltaY
             #x stuff
@@ -124,7 +125,7 @@ class Module2Var(KelpPlugin):
                 i += 1
             curXYDir[0] = curXYDir[0] + deltaX
             curXYDir[1] = curXYDir[1] + deltaY
-        elif 'go to' in name:
+        elif ((not 'go to front' in name) and 'go to' in name):
             curXYDir[0] = block.args[0]
             curXYDir[1] = block.args[1]
             xPos = round(curXYDir[0] + 250)
@@ -202,11 +203,9 @@ class Module2Var(KelpPlugin):
         for name, _, block in self.iter_blocks(script):
             if name == 'show':
                 blocks["show block"] = True
-            elif name == 'point in direction %s':
-                direction = block.args[0]
             elif name == 'hide' and blocks["show block"]:
-                  blocks["hide block"] = True
-            elif (blocks["show block"] and (not blocks["hide block"])):
+                blocks["hide block"] = True
+            else:
                 self.arrayDoStuff(name,block,twoDMouseArray,mouseXYDir)
     def checkMouse(self, mouse):
         global twoDMouseArray
