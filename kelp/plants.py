@@ -17,7 +17,7 @@ class Plants(KelpPlugin):
         super(Plants, self).__init__()
 
 
-    def analyze(self, scratch):
+    def analyze(self, scratch, **kwargs):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
 

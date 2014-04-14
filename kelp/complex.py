@@ -8,7 +8,7 @@ class ComplexMaze(KelpPlugin):
     def __init__(self):
         super(ComplexMaze, self).__init__()
 
-    def analyze (self, scratch):
+    def analyze (self, scratch, **kwargs):
         lister = []
         winningScript = []
         hitScript = []

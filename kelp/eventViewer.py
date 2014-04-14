@@ -31,7 +31,7 @@ class Events(KelpPlugin):
         Keys: sprite names
         Values: that sprite's scripts for this start event ."""
 
-    def analyze(self, scratch):
+    def analyze(self, scratch, **kwargs):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
         #initialize

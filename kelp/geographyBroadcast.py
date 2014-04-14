@@ -97,7 +97,7 @@ class geographyBroadcast(KelpPlugin):
         return drive, say
 
 
-    def analyze(self, scratch):
+    def analyze(self, scratch, **kwargs):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
 

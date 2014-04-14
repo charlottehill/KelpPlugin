@@ -267,7 +267,7 @@ class Module2Var(KelpPlugin):
                     if scriptContains(script, [["+", "1"]]):
                         blocks["increment"] = True
         return blocks
-    def analyze(self, scratch):
+    def analyze(self, scratch, **kwargs):
         global twoDDogArray
         global twoDMouseArray
         twoDDogArray = []

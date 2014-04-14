@@ -23,7 +23,7 @@ class Sequence(KelpPlugin):
     def __init__(self):
         super(Sequence, self).__init__
 
-    def analyze(self, scratch):
+    def analyze(self, scratch, **kwargs):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
 
@@ -43,7 +43,7 @@ class Screenshot(KelpPlugin):
     def __init__(self):
         super(Screenshot, self).__init__
 
-    def analyze(self, scratch):
+    def analyze(self, scratch, **kwargs):
         self.thumbnails = dict()
         self.thumbnails['screen'] = self.save_png(scratch.name, scratch.thumbnail, 'screen')
         return self.thumbnails

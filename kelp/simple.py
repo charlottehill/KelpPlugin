@@ -7,7 +7,7 @@ class SimpleMaze(KelpPlugin):
     def __init__(self):
         super(SimpleMaze, self).__init__()
 
-    def analyze(self, scratch):
+    def analyze(self, scratch, **kwargs):
         count = 0
         arrows = ["left", "right", "up", "down"]
         arrows2 = list(arrows)

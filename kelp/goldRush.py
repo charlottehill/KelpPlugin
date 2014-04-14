@@ -219,7 +219,7 @@ class GoldRush(KelpPlugin):
         shake = time1 and time2 and move1 and move2
         return costume and say and shake
 
-    def analyze(self, scratch):
+    def analyze(self, scratch, **kwargs):
         if not getattr(scratch, 'kelp_prepared', False):
             KelpPlugin.tag_reachable_scripts(scratch)
 

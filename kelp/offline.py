@@ -141,7 +141,7 @@ def main():
     for plugin_class in plugins[lesson]:
         plugin = plugin_class()
         name = plugin.__class__.__name__
-        results = plugin._process(octo)
+        results = plugin._process(octo, filename=path)
         html_list.append(htmlwrappers[name](results))
 
 
