@@ -15,36 +15,8 @@ class KelpPlugin(HairballPlugin):
 
     """
 
-    BLOCKMAPPING = {
-        'costume': frozenset([('switch backdrop to %s', 'absolute'),
-                              ('next backdrop', 'relative'),
-                              ('switch costume to %s', 'absolute'),
-                              ('next costume', 'relative')]),
-        'orientation': frozenset([('turn @turnRight %s degrees', 'relative'),
-                                  ('turn @turnLeft %s degrees', 'relative'),
-                                  ('point in direction %s', 'absolute'),
-                                  ('point towards %s', 'relative')]),
-        'position': frozenset([('move %s steps', 'relative'),
-                               ('glide %s steps', 'relative'),
-                               ('go to x:%s y:%s', 'absolute'),
-                               ('go to %s', 'relative'),
-                               ('glide %s secs to x:%n y:%n', 'relative'),
-                               ('change x by %s', 'relative'),
-                               ('x position', 'absolute'),
-                               ('change y by %s', 'relative'),
-                               ('y position', 'absolute')]),
-        'size': frozenset([('change size by %s', 'relative'),
-                           ('set size to %s%%', 'absolute')]),
-        'visibility': frozenset([('hide', 'absolute'),
-                                 ('show', 'absolute')])}
-
-    SCRIPT_TITLES = {
-        HairballPlugin.HAT_GREEN_FLAG: 'When green flag clicked scripts',
-        HairballPlugin.HAT_WHEN_I_RECEIVE: 'When I receive a message scripts',
-        HairballPlugin.HAT_KEY: 'When a key is pressed scripts',
-        HairballPlugin.HAT_MOUSE: 'When this sprite is clicked scripts',
-        HairballPlugin.NO_HAT: ('Scripts without starting control blocks '
-                                '(incomplete)')}
+    BLOCKMAPPING = HairballPlugin.BLOCKMAPPING
+    BLOCKMAPPING['position'] |= frozenset([('glide %s steps', 'relative')])
 
     @staticmethod
     def iter_scripts(scratch):

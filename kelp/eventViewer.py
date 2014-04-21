@@ -18,6 +18,12 @@ import kurt
 '''
 
 BASE_PATH = './results'
+SCRIPT_TITLES = {
+    KelpPlugin.HAT_GREEN_FLAG: 'When green flag clicked scripts',
+    KelpPlugin.HAT_WHEN_I_RECEIVE: 'When I receive a message scripts',
+    KelpPlugin.HAT_KEY: 'When a key is pressed scripts',
+    KelpPlugin.HAT_MOUSE: 'When this sprite is clicked scripts',
+    KelpPlugin.NO_HAT: 'Scripts without starting control blocks (incomplete)'}
 
 
 class Events(KelpPlugin):
@@ -85,7 +91,7 @@ def event_display(results):
         # make a row for each event type
         for event_type, event in events.items():
             html.append('<tr>') # new row
-            html.append('<td>{0}</td>'.format(KelpPlugin.SCRIPT_TITLES[event_type])) # row header
+            html.append('<td>{0}</td>'.format(SCRIPT_TITLES[event_type])) # row header
             for sprite in sprites:
                 html.append('<td><pre class="blocks"><p>')
                 if event[sprite]['visible']:
@@ -110,7 +116,7 @@ def event_display(results):
 
         # Displays scripts
 #        for event_type, event in events.items():
-#            html.append('<tr style="height:30px;"><td style = "width:200px;" class = "noBorder" ><b>{0}</b></td>'.format(KelpPlugin.SCRIPT_TITLES[event_type]))
+#            html.append('<tr style="height:30px;"><td style = "width:200px;" class = "noBorder" ><b>{0}</b></td>'.format(SCRIPT_TITLES[event_type]))
 #            for sprite in sprites:
 #            	html.append('  <td>')
 #            	visible = ""
