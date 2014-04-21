@@ -98,9 +98,6 @@ class geographyBroadcast(KelpPlugin):
 
 
     def analyze(self, scratch, **kwargs):
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
-
         # record the car's When I Receive scripts
         # and the cities' When Clicked scripts
         sprite_scripts = dict()

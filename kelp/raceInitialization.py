@@ -32,9 +32,6 @@ class raceInitialization(KelpPlugin):
         Values: that sprite's scripts for this start event ."""
 
     def analyze(self, scratch, **kwargs):
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
-
         # initializaton - we only need to look at Green Flag scripts for Race Initialization
         # look at when clicked to see if they initialize after clicking
         scripts = {'Cat': set(), 'Rooster': set()}

@@ -18,9 +18,6 @@ class Plants(KelpPlugin):
 
 
     def analyze(self, scratch, **kwargs):
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
-
         scenes = {'renamed':False,
                   'initialized': {'Sun':False, 'Button':False},
                   'raining': {'show': False, 'background': False},
@@ -41,7 +38,7 @@ class Plants(KelpPlugin):
                         sprites['green flag'][sprite.name].add(script)
                     elif KelpPlugin.script_start_type(script) == self.HAT_WHEN_I_RECEIVE:
                         sprites['receive'][sprite.name].add(script)
-                    
+
         #check green flag for the sun and the button
         # the sun should start with ClickMeCostume costume
         for script in sprites['green flag']['Sun']:

@@ -278,10 +278,7 @@ class Module2Var(KelpPlugin):
             for j in xrange(400):
                 twoDDogArray[i].append(0)
                 twoDMouseArray[i].append(0)
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
-
-        # check cat: if there's not a cat sprite, return false 
+        # check cat: if there's not a cat sprite, return false
         cat,dog,mouse = False, False, False
         for sprite in scratch.sprites:
             if sprite.name.lower() == 'cat':

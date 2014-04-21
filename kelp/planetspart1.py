@@ -59,9 +59,6 @@ class PlanetsProjectPart1(KelpPlugin):
             return 2
 
     def analyze(self, scratch, **kwargs):
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
-
         planets = {'Mercury': False, 'Venus': False,
                        'Earth': False, 'Mars': False,
                        'Jupiter': False, 'Saturn': False,

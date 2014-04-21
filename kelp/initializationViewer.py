@@ -95,8 +95,6 @@ class Initialization(KelpPlugin):
 
 
     def analyze(self, scratch, **kwargs):
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
         self.changes = dict()
         for sprite in scratch.sprites + [scratch.stage]:
             self.changes[sprite.name] = dict()

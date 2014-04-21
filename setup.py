@@ -6,7 +6,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.md')).read()
 
 requires = [
-    'hairball>=0.2'
+    'hairball>=0.3rc1'
     ]
 
 setup(name='kelp',

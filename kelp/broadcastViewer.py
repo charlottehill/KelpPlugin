@@ -61,8 +61,6 @@ class Broadcast(KelpPlugin):
             Keys: start events
             Values: scripts that begin with those events ."""
     def analyze(self, scratch, **kwargs):
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
         self.broadcasts = dict()
         self.receives = dict()
         self.events = dict()

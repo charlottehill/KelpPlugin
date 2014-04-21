@@ -24,9 +24,6 @@ class Sequence(KelpPlugin):
         super(Sequence, self).__init__
 
     def analyze(self, scratch, **kwargs):
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
-
         seq = dict()
 
         #store the values for the variables level, points, and health if they exist

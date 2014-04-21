@@ -220,9 +220,6 @@ class GoldRush(KelpPlugin):
         return costume and say and shake
 
     def analyze(self, scratch, **kwargs):
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
-
         self.messages = {'scene1': '', 'scene2': '',
                          'scene3': '', 'nextButton': '',
                          'nextButton2': ''}

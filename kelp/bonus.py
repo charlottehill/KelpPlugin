@@ -13,8 +13,6 @@ class Bonus(KelpPlugin):
         super(Bonus, self).__init__
 
     def analyze(self, scratch, **kwargs):
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
         return {}
 
 

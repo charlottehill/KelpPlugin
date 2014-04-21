@@ -59,16 +59,13 @@ class PlanetsProjectPart2(KelpPlugin):
             return 2
 
     def analyze(self, scratch, **kwargs):
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
-
-        # check rocket: if there's not a rocket sprite, return false 
+        # check rocket: if there's not a rocket sprite, return false
         rocket = False
         for sprite in scratch.sprites:
             if sprite.name == 'Rocket':
                 rocket = sprite
-        
-        # there should be scripts for right, left and down 
+
+        # there should be scripts for right, left and down
         blocks = {'left': False, 'right': False, 'down': False}
 
         if rocket:

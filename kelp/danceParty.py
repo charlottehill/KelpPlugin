@@ -49,9 +49,6 @@ class DancePartyProject(KelpPlugin):
         return costume1 and timing1 and costume2 and timing2 and costume3
 
     def analyze(self, scratch, **kwargs):
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
-
         # check initialization
         changes = dict()
         init = initializationViewer.Initialization()

@@ -20,9 +20,6 @@ class Predator(KelpPlugin):
         super(Predator, self).__init__
 
     def analyze(self, scratch, **kwargs):
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
-
         pickedup = {'Horse': False, 'Bear': False,
                     'Snake': False, 'Zebra': False}
         # locations of all the animals

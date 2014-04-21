@@ -25,8 +25,6 @@ class Costumes(KelpPlugin):
         super(Costumes, self).__init__
 
     def analyze(self, scratch, **kwargs):
-        if not getattr(scratch, 'kelp_prepared', False):
-            KelpPlugin.tag_reachable_scripts(scratch)
         projectName = scratch.name
         self.costumes = dict()
         self.costumes['Stage'] = set()
