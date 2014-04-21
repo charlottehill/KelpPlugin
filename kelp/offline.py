@@ -17,6 +17,7 @@ from . import plants
 from . import simple
 from . import complex
 from . import module2Var
+from hairball import KurtCache
 from octopi import OctopiPlugin  # noqa
 from optparse import OptionParser
 import kurt
@@ -131,8 +132,8 @@ def main():
         plugins[lesson].insert(0, x)
     # plugins[lesson].extend(lessons.get(project, []))
 
-    # set up kurt project
-    octo = kurt.Project.load(path)
+    # set up kurt project (uses caching)
+    octo = KurtCache().load(path)
 
     # Prepare the output result
     html_list = [html_view(lesson)]
