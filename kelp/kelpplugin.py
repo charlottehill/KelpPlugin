@@ -43,7 +43,8 @@ class KelpPlugin(HairballPlugin):
         HairballPlugin.HAT_WHEN_I_RECEIVE: 'When I receive a message scripts',
         HairballPlugin.HAT_KEY: 'When a key is pressed scripts',
         HairballPlugin.HAT_MOUSE: 'When this sprite is clicked scripts',
-        HairballPlugin.NO_HAT: 'Scripts without starting control blocks (incomplete)'}
+        HairballPlugin.NO_HAT: ('Scripts without starting control blocks '
+                                '(incomplete)')}
 
     @staticmethod
     def iter_scripts(scratch):
@@ -137,8 +138,8 @@ class KelpPlugin(HairballPlugin):
                 if starting_type == HairballPlugin.NO_HAT:
                     script.reachable = False
                 elif starting_type == HairballPlugin.HAT_WHEN_I_RECEIVE:
-                    script.reachable = False  # Value will be updated if
-                                              # reachable
+                    # Value will be updated if reachable
+                    script.reachable = False
                     message = script.blocks[0].args[0].lower()
                     untriggered_events.setdefault(message, set()).add(script)
                 else:

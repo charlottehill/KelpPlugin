@@ -32,7 +32,7 @@ lessons = {'sequential': frozenset(['predatorprey', 'egypt', 'thanksgiving']),
            'costumes': frozenset(['racing', 'dance']),
            'scenes': frozenset(['goldrush'])}
 
-plugins = {'sequential': [ sequenceViewer.Screenshot],
+plugins = {'sequential': [sequenceViewer.Screenshot],
            'events': [eventViewer.Events, sequenceViewer.Screenshot],
            'initialization': [initializationViewer.Initialization,
                               eventViewer.Events],
@@ -63,7 +63,8 @@ htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'Broadcast': broadcastViewer.broadcast_display,
                 'Costumes': costumeViewer.costume_display,
                 'Predator': predatorPrey.predator_display,
-                'raceInitialization': raceInitialization.initialization_display,
+                'raceInitialization':
+                    raceInitialization.initialization_display,
                 'DancePartyProject': danceParty.danceProj_display,
                 'PlanetsProject': planets.planetProj_display,
                 'PlanetsProjectPart1': planetspart1.planetProj_display,
@@ -76,26 +77,28 @@ htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'ComplexMaze': complex.complex_MazeDisplay,
                 'Module2Var': module2Var.Module2VarView}
 
+
 def html_view(title):
     html = []
     html.append('\n<html>')
     html.append('\n<head>')
     html.append('\n<meta charset="utf8">')
-    #title() makes first letter capital
-    html.append('\n<h1 style="text-align:center">{0} Lesson</h1>'.format(title.title()))
+    # title() makes first letter capital
+    html.append('\n<h1 style="text-align:center">{0} Lesson</h1>'
+                .format(title.title()))
     html.append('<hr>')
-    #<!-- Include jQuery -->
+    # <!-- Include jQuery -->
     html.append('\n<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/'
                 'jquery.min.js"></script>')
 
-    #<!-- Include scratchblocks2 files -->
+    # <!-- Include scratchblocks2 files -->
     html.append('\n<link rel="stylesheet" href="//charlottehill.com/'
                 'scratchblocks/build/scratchblocks2.css">')
     html.append('\n<link rel="stylesheet" type="text/css" href="style.css">')
     html.append('\n<script src="//charlottehill.com/scratchblocks/build/'
                 'scratchblocks2.js"></script>')
 
-    #<!-- Parse blocks -->
+    # <!-- Parse blocks -->
     html.append('\n<script>')
     html.append('\n$(document).ready(function() {')
     html.append('\n     scratchblocks2.parse("pre.blocks");')
@@ -123,15 +126,13 @@ def main():
         print('Lesson `{}` not valid. Goodbye!'.format(lesson))
         sys.exit(1)
     # Add the project-specific plugins
-    if project != None:
+    if project is not None:
         x = plugins[project][0]
-        plugins[lesson].insert(0,x)
-    #plugins[lesson].extend(lessons.get(project, []))
+        plugins[lesson].insert(0, x)
+    # plugins[lesson].extend(lessons.get(project, []))
 
     # set up kurt project
     octo = kurt.Project.load(path)
-    octo.hairball_prepared = False
-
 
     # Prepare the output result
     html_list = [html_view(lesson)]
@@ -143,14 +144,12 @@ def main():
         results = plugin._process(octo, filename=path)
         html_list.append(htmlwrappers[name](results))
 
-
-
     # add on the closing html (to do)
     html_list.append('</body>')
     html_list.append('</html>')
 
     # write to the file (to do: change file and directory names)
-    with open('{0}_{1}.html'.format(lesson,project), 'w') as fp:
+    with open('{0}_{1}.html'.format(lesson, project), 'w') as fp:
         fp.write(''.join(html_list))
 
 if __name__ == '__main__':
