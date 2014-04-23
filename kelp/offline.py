@@ -5,6 +5,7 @@ from . import eventViewer
 from . import initializationViewer
 from . import sequenceViewer
 from . import danceParty
+from . import dancePartyBroadcast
 from . import planets
 from . import planetspart1
 from . import planetspart2
@@ -43,6 +44,7 @@ plugins = {'sequential': [sequenceViewer.Screenshot],
            'scenes': [costumeViewer.Costumes],
            'predator': [predatorPrey.Predator],
            'dance': [danceParty.DancePartyProject],
+           'danceBR': [dancePartyBroadcast.DancePartyProjectBR],
            'planets': [planets.PlanetsProject],
            'part1': [planetspart1.PlanetsProjectPart1],
            'part2': [planetspart2.PlanetsProjectPart2],
@@ -67,6 +69,7 @@ htmlwrappers = {'Sequence': sequenceViewer.sequence_display,
                 'raceInitialization':
                     raceInitialization.initialization_display,
                 'DancePartyProject': danceParty.danceProj_display,
+                'DancePartyProjectBR': dancePartyBroadcast.danceProj_display,
                 'PlanetsProject': planets.planetProj_display,
                 'PlanetsProjectPart1': planetspart1.planetProj_display,
                 'PlanetsProjectPart2': planetspart2.planetProj_display,
