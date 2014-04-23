@@ -17,9 +17,9 @@ Point = namedtuple('Point', ['x', 'y'])
 
 
 DIRECTIONS = {'down': 180, 'left': -90, 'right': 90, 'up': 0}
-KEYS = ('bear', 'horse', 'snake', 'zebra', '#extra_hat_mouse',
-        '#invalid_block', '#invalid_dist', '#invalid_ori', '#invalid_point',
-        '#unmoved', '#unrotated')
+KEYS = ('bear', 'horse', 'snake', 'zebra', '#blocks', '#blocks_other',
+        '#extra_hat_mouse', '#invalid_block', '#invalid_dist', '#invalid_ori',
+        '#invalid_point', '#scripts', '#unmoved', '#unrotated')
 LOCATIONS = {'bear': Point(51, 91), 'horse': Point(128, -26),
              'snake': Point(134, -126), 'zebra': Point(-143, -115)}
 OUTPUT_HEADER = False
@@ -61,6 +61,11 @@ class Predator(KelpPlugin):
         """Initialize and instance of the Predator plugin."""
         super(Predator, self).__init__()
         self.other_counter = Counter()
+        self.pass_count = 0
+
+    def initial_attributes(self, sprite):
+        attrs = ('direction', 'position', 'is_visible', 'size')
+        return {x: getattr(sprite, x) for x in attrs}
 
     def analyze(self, scratch, filename, **kwargs):
         data = {x: 0 for x in KEYS}
@@ -68,7 +73,9 @@ class Predator(KelpPlugin):
 
         # find the list of blocks for Net::OnMouseClicked
         blocks = []
+        attrs = {}
         for sprite in scratch.sprites:
+            attrs[sprite.name.lower()] = self.initial_attributes(sprite)
             if sprite.name == 'Net':
                 blocks = []
                 other_blocks = 0
@@ -126,10 +133,14 @@ class Predator(KelpPlugin):
                 if float(block.args[0]) == 0:
                     data['#unrotated'] += 1
                 net_orientation -= float(block.args[0])
-            elif name == 'glide %s steps':
-                assert len(block.args) == 1
-                distance = block.args[0]
-                if not isinstance(block.args[0], float):  # enforce bounds
+            elif name in ('glide %s steps', '%s glide %s steps'):
+                if name == 'glide %s steps':
+                    assert len(block.args) == 1
+                    distance = block.args[0]
+                else:
+                    assert len(block.args) == 2
+                    distance = block.args[1]
+                if not isinstance(distance, float):  # enforce bounds
                     if distance > 250:
                         data['#invalid_dist'] += 1
                         distance = 250
@@ -157,20 +168,26 @@ class Predator(KelpPlugin):
             elif name not in ('when this sprite clicked',):
                 self.other_counter[name] += 1
 
+        if 'snake' not in attrs:
+            data['snake'] = ''
+
         output = [normalize(x[1]) for x in sorted(data.items())]
         global OUTPUT_HEADER
         if not OUTPUT_HEADER:
             print(', '.join(['Filename'] + sorted(data.keys()) + ['Passed']))
             OUTPUT_HEADER = True
 
+        passed = (('snake' not in attrs or data['snake'] < 1) and
+                  all(data[x] > 0 for x in ('bear', 'horse', 'zebra')))
+        if passed:
+            self.pass_count += 1
         output.insert(0, '/'.join(filename.split('/')[-2:]))
-        output.append(
-            normalize(data['snake'] < 1 and
-                      all(data[x] > 0 for x in ('bear', 'horse', 'zebra'))))
+        output.append(normalize(passed))
         print(', '.join(output))
         return data
 
     def finalize(self):
+        print('{} passed'.format(self.pass_count))
         if self.other_counter:
             print(self.other_counter)
 
