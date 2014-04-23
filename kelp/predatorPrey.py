@@ -7,25 +7,51 @@ Run via:
 """
 
 from __future__ import print_function
-from collections import Counter
+from collections import Counter, namedtuple
 from kelpplugin import KelpPlugin
 import kurt
 import math
 
 
-DIRECTIONS = {'down': 180, 'left': -90, 'right': 90, 'up': 0}
-# locations of all the animals
-LOCATIONS = {'bear': (51, 91), 'horse': (128, -26),
-             'snake': (134, -126), 'zebra': (-143, -115)}
+Point = namedtuple('Point', ['x', 'y'])
 
+
+DIRECTIONS = {'down': 180, 'left': -90, 'right': 90, 'up': 0}
+KEYS = ('bear', 'horse', 'snake', 'zebra', '#extra_hat_mouse',
+        '#invalid_block', '#invalid_dist', '#invalid_ori', '#invalid_point',
+        '#unmoved', '#unrotated')
+LOCATIONS = {'bear': Point(51, 91), 'horse': Point(128, -26),
+             'snake': Point(134, -126), 'zebra': Point(-143, -115)}
 OUTPUT_HEADER = False
 
 
 def normalize(value):
+    """Convert boolean to 0 or 1 string."""
     if isinstance(value, bool):
         return '1' if value else '0'
     else:
         return str(value)
+
+
+def seg_distance(seg, point):
+    # find the distance between the point and line segment
+    dx = seg[1].x - seg[0].x
+    dy = seg[1].y - seg[0].y
+    u = ((point.x - seg[0].x) * dx +
+         (point.y - seg[0].y) * dy) / float(dx ** 2 + dy ** 2)
+    u = max(0, min(u, 1))
+    return math.sqrt((seg[0].x + u * dx - point.x) ** 2 +
+                     (seg[0].y + u * dy - point.y) ** 2)
+
+
+def move(position, orientation, distance):
+    rad = math.radians(orientation)
+    return Point(position.x + math.sin(rad) * distance,
+                 position.y + math.cos(rad) * distance)
+
+
+def rotate_to(src, dst):
+    return (90 - math.degrees(math.atan2(dst.y - src.y, dst.x - src.x))) % 360
 
 
 class Predator(KelpPlugin):
@@ -37,11 +63,7 @@ class Predator(KelpPlugin):
         self.other_counter = Counter()
 
     def analyze(self, scratch, filename, **kwargs):
-        data = {'bear': False, 'horse': False, 'snake': False, 'zebra': False,
-                '#extra_hat_mouse': 0,
-                '#invalid_block': 0, '#invalid_dist': 0, '#invalid_ori': 0,
-                '#unmoved': 0, '#unrotated': 0}
-
+        data = {x: 0 for x in KEYS}
         # TODO: Verify initial position and orientation (other attributes too?)
 
         # find the list of blocks for Net::OnMouseClicked
@@ -74,37 +96,36 @@ class Predator(KelpPlugin):
                 break
 
         # net's position is initialized in a hidden script
-        x1, y1 = -190, 72
-        x2, y2 = x1, y1
-        direction = 90
+        net_orientation = 90
+        net_position = Point(-190, 72)
         initial_orientation = True
 
         # iterate through the script and calculate where the net goes
         for name, _, block in blocks:
             if name == 'point in direction %s':
                 assert len(block.args) == 1
-                prev_direction = direction
+                prev_ori = net_orientation
                 if block.args[0] in DIRECTIONS:
-                    direction = DIRECTIONS[block.args[0]]
+                    net_orientation = DIRECTIONS[block.args[0]]
                 else:
                     try:
-                        direction = float(block.args[0])
+                        net_orientation = float(block.args[0])
                     except ValueError:
                         data['#invalid_ori'] += 1
-                        prev_direction = None  # Don't count as unrotated
-                if not initial_orientation and prev_direction == direction:
+                        prev_ori = None  # Don't count as unrotated
+                if not initial_orientation and prev_ori == net_orientation:
                     data['#unrotated'] += 1
                 initial_orientation = False
             elif name == 'turn @turnRight %s degrees':
                 assert len(block.args) == 1
                 if float(block.args[0]) == 0:
                     data['#unrotated'] += 1
-                direction = direction + float(block.args[0])
+                net_orientation += float(block.args[0])
             elif name == 'turn @turnLeft %s degrees':
                 assert len(block.args) == 1
                 if float(block.args[0]) == 0:
                     data['#unrotated'] += 1
-                direction = direction - float(block.args[0])
+                net_orientation -= float(block.args[0])
             elif name == 'glide %s steps':
                 assert len(block.args) == 1
                 distance = block.args[0]
@@ -118,32 +139,21 @@ class Predator(KelpPlugin):
                 if distance == 0:
                     data['#unmoved'] += 1
                     continue
-                # calculate next location
-                rad = math.radians(direction)
-                x2 = x1 + math.sin(rad) * distance
-                y2 = y1 + math.cos(rad) * distance
-                # check line
-                for animal, (x3, y3) in LOCATIONS.items():
-                    if not data[animal]:
-                        # find the distance between the point and line segment
-                        px = x2 - x1
-                        py = y2 - y1
-                        something = float(px*px + py*py)
-                        u = ((x3 - x1) * px + (y3 - y1) * py) / something
-                        if u > 1:
-                            u = 1
-                        elif u < 0:
-                            u = 0
-                        dx = x1 + u * px - x3
-                        dy = y1 + u * py - y3
-                        distance = math.sqrt(dx*dx + dy*dy)
-                        # check if the distance between point and the line < 70
-                        if distance < 70:
-                            data[animal] = True
-                x1, y1 = x2, y2
+                next_position = move(net_position, net_orientation, distance)
+                for sprite_name, sprite_pos in LOCATIONS.items():
+                    segment = net_position, next_position
+                    if seg_distance(segment, sprite_pos) < 70:
+                        data[sprite_name] += 1
+                net_position = next_position
+            elif name == 'point towards %s':
+                assert len(block.args) == 1
+                if block.args[0] is None:
+                    data['#invalid_point'] += 1
+                    continue
+                target = LOCATIONS[block.args[0].lower()]
+                net_orientation = rotate_to(net_position, target)
             elif 'glide' in name:
                 data['#invalid_block'] += 1
-            # TODO: handle point towards
             elif name not in ('when this sprite clicked',):
                 self.other_counter[name] += 1
 
@@ -155,13 +165,14 @@ class Predator(KelpPlugin):
 
         output.insert(0, '/'.join(filename.split('/')[-2:]))
         output.append(
-            normalize(not data['snake'] and
-                      all(data[x] for x in ('bear', 'horse', 'zebra'))))
+            normalize(data['snake'] < 1 and
+                      all(data[x] > 0 for x in ('bear', 'horse', 'zebra'))))
         print(', '.join(output))
         return data
 
     def finalize(self):
-        print(self.other_counter)
+        if self.other_counter:
+            print(self.other_counter)
 
 
 def predator_display(seq):
@@ -194,3 +205,40 @@ def predator_display(seq):
         html.append('Great job picking up all the mammals!</h2>')
 
     return ''.join(html)
+
+
+if __name__ == '__main__':
+    """Provide some tests for the plugin."""
+    import sys
+    epsl = sys.float_info.epsilon * 2
+
+    def test_similar(a, b):
+        if abs(a.x - b.x) > epsl or abs(a.y - b.y) > epsl:
+            print('{} is not similar to {}'.format(a, b))
+
+    center = Point(0, 0)
+    up = Point(0, 1)
+    right = Point(1, 0)
+    down = Point(0, -1)
+    left = Point(-1, 0)
+    assert rotate_to(center, up) == 0
+    assert rotate_to(center, right) == 90
+    assert rotate_to(center, down) == 180
+    assert rotate_to(center, left) == 270
+
+    # Verify that we can move properly
+    test_similar(center, move(up, rotate_to(up, center), 1))
+    test_similar(center, move(right, rotate_to(right, center), 1))
+    test_similar(center, move(down, rotate_to(down, center), 1))
+    test_similar(center, move(left, rotate_to(left, center), 1))
+
+    test_similar(right, move(left, rotate_to(left, right), 2))
+    test_similar(left, move(right, rotate_to(right, left), 2))
+    test_similar(down, move(up, rotate_to(up, down), 2))
+    test_similar(up, move(down, rotate_to(down, up), 2))
+
+    test_similar(up, move(left, rotate_to(left, up), math.sqrt(2)))
+    test_similar(up, move(right, rotate_to(right, up), math.sqrt(2)))
+
+    test_similar(down, move(left, rotate_to(left, down), math.sqrt(2)))
+    test_similar(down, move(right, rotate_to(right, down), math.sqrt(2)))
