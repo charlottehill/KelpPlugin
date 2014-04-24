@@ -11,6 +11,7 @@ from collections import Counter, namedtuple
 from kelpplugin import KelpPlugin
 import kurt
 import math
+import sys
 
 
 Point = namedtuple('Point', ['x', 'y'])
@@ -20,8 +21,10 @@ DIRECTIONS = {'down': 180, 'left': -90, 'right': 90, 'up': 0}
 KEYS = ('bear', 'horse', 'snake', 'zebra', '#blocks', '#blocks_other',
         '#extra_hat_mouse', '#invalid_block', '#invalid_dist', '#invalid_ori',
         '#invalid_point', '#scripts', '#unmoved', '#unrotated')
-LOCATIONS = {'bear': Point(51, 91), 'horse': Point(128, -26),
-             'snake': Point(134, -126), 'zebra': Point(-143, -115)}
+LOCATIONS = {'bear': (Point(51, 91), 100),
+             'horse': (Point(128, -26), 90),
+             'snake': (Point(134, -126), 50),
+             'zebra': (Point(-143, -115), 100)}
 OUTPUT_HEADER = False
 
 
@@ -151,9 +154,9 @@ class Predator(KelpPlugin):
                     data['#unmoved'] += 1
                     continue
                 next_position = move(net_position, net_orientation, distance)
-                for sprite_name, sprite_pos in LOCATIONS.items():
+                for sprite_name, (sprite_pos, radius) in LOCATIONS.items():
                     segment = net_position, next_position
-                    if seg_distance(segment, sprite_pos) < 70:
+                    if seg_distance(segment, sprite_pos) < radius:
                         data[sprite_name] += 1
                 net_position = next_position
             elif name == 'point towards %s':
@@ -161,7 +164,7 @@ class Predator(KelpPlugin):
                 if block.args[0] is None:
                     data['#invalid_point'] += 1
                     continue
-                target = LOCATIONS[block.args[0].lower()]
+                target = LOCATIONS[block.args[0].lower()][0]
                 net_orientation = rotate_to(net_position, target)
             elif 'glide' in name:
                 data['#invalid_block'] += 1
@@ -187,9 +190,9 @@ class Predator(KelpPlugin):
         return data
 
     def finalize(self):
-        print('{} passed'.format(self.pass_count))
+        sys.stderr.write('{} passed\n'.format(self.pass_count))
         if self.other_counter:
-            print(self.other_counter)
+            sys.stderr.write('{}\n'.format(self.other_counter))
 
 
 def predator_display(seq):
@@ -226,7 +229,6 @@ def predator_display(seq):
 
 if __name__ == '__main__':
     """Provide some tests for the plugin."""
-    import sys
     epsl = sys.float_info.epsilon * 2
 
     def test_similar(a, b):
