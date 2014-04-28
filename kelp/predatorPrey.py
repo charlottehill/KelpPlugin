@@ -18,14 +18,28 @@ Point = namedtuple('Point', ['x', 'y'])
 
 
 DIRECTIONS = {'down': 180, 'left': -90, 'right': 90, 'up': 0}
-KEYS = ('bear', 'horse', 'snake', 'zebra', '#blocks', '#blocks_other',
-        '#extra_hat_mouse', '#invalid_block', '#invalid_dist', '#invalid_ori',
-        '#invalid_point', '#scripts', '#unmoved', '#unrotated')
+KEYS = ('bear', 'horse', 'snake', 'zebra', '!scripts', '#blocks',
+        '#blocks_other', '#extra_hat_mouse', '#glide', '#glide_to',
+        '#invalid_dist', '#invalid_ori', '#invalid_point', '#invalid_target',
+        '#invalid_x', '#invalid_y', '#unmoved', '#unrotated')
 LOCATIONS = {'bear': (Point(51, 91), 100),
              'horse': (Point(128, -26), 90),
              'snake': (Point(134, -126), 50),
              'zebra': (Point(-143, -115), 100)}
 OUTPUT_HEADER = False
+
+
+def compute_intersections(start, end, data):
+    for sprite_name, (sprite_pos, radius) in LOCATIONS.items():
+        segment = start, end
+        if seg_distance(segment, sprite_pos) < radius:
+            data[sprite_name] += 1
+    if end.x < -244 or end.x > 243:
+        data['#invalid_x'] += 1
+        end = Point(max(-244, min(243, end.x)), end.y)
+    elif end.y < -183 or end.y > 183:
+        data['#invalid_y'] += 1
+        end = Point(end.x, max(-183, min(183, end.y)))
 
 
 def normalize(value):
@@ -102,7 +116,7 @@ class Predator(KelpPlugin):
                         other_blocks += len(list(self.iter_blocks(script)))
                 data['#blocks'] = len(blocks)
                 data['#blocks_other'] = other_blocks
-                data['#scripts'] = len(scripts)
+                data['!scripts'] = len(scripts)
                 break
 
         # net's position is initialized in a hidden script
@@ -143,21 +157,16 @@ class Predator(KelpPlugin):
                 else:
                     assert len(block.args) == 2
                     distance = block.args[1]
+                data['#glide'] += 1
                 if not isinstance(distance, float):  # enforce bounds
-                    if distance > 250:
+                    if distance > 610 or distance < -610:
                         data['#invalid_dist'] += 1
-                        distance = 250
-                    elif distance < -250:
-                        data['#invalid_dist'] += 1
-                        distance = -250
+                        distance = cmp(distance, 0) * 610
                 if distance == 0:
                     data['#unmoved'] += 1
                     continue
                 next_position = move(net_position, net_orientation, distance)
-                for sprite_name, (sprite_pos, radius) in LOCATIONS.items():
-                    segment = net_position, next_position
-                    if seg_distance(segment, sprite_pos) < radius:
-                        data[sprite_name] += 1
+                compute_intersections(net_position, next_position, data)
                 net_position = next_position
             elif name == 'point towards %s':
                 assert len(block.args) == 1
@@ -167,7 +176,20 @@ class Predator(KelpPlugin):
                 target = LOCATIONS[block.args[0].lower()][0]
                 net_orientation = rotate_to(net_position, target)
             elif 'glide' in name:
-                data['#invalid_block'] += 1
+                if name == 'glide to %s':
+                    assert len(block.args) == 1
+                    dst = block.args[0].lower() if block.args[0] else None
+                else:
+                    assert len(block.args) == 2
+                    dst = block.args[1].lower() if block.args[1] else None
+                data['#glide_to'] += 1
+                if dst not in LOCATIONS:
+                    data['#invalid_target'] += 1
+                    continue
+                next_position = LOCATIONS[dst][0]
+                net_orientation = rotate_to(net_position, next_position)
+                compute_intersections(net_position, next_position, data)
+                net_position = next_position
             elif name not in ('when this sprite clicked',):
                 self.other_counter[name] += 1
 
@@ -177,14 +199,16 @@ class Predator(KelpPlugin):
         output = [normalize(x[1]) for x in sorted(data.items())]
         global OUTPUT_HEADER
         if not OUTPUT_HEADER:
-            print(', '.join(['Filename'] + sorted(data.keys()) + ['Passed']))
+            print(', '.join(['Student', 'Sub'] + sorted(data.keys())
+                            + ['Passed']))
             OUTPUT_HEADER = True
 
+        path_parts = filename.split('/')[-2:]
         passed = (('snake' not in attrs or data['snake'] < 1) and
                   all(data[x] > 0 for x in ('bear', 'horse', 'zebra')))
         if passed:
             self.pass_count += 1
-        output.insert(0, '/'.join(filename.split('/')[-2:]))
+        output[0:0] = path_parts
         output.append(normalize(passed))
         print(', '.join(output))
         return data
