@@ -9,14 +9,14 @@ import kurt
 import pprint
 
 
-'''How to run this plugin:                                                                                                 
-        hairball -k <path>/octopi.py -d <folder where sequenceViewer is> -p sequenceViewer.Sequence test.sb                
-        For example, if `octopi.py` and sequenceViewer are both in the directory where you are:                            
-    hairball -k octopi.py -d . -p sequenceViewer.Sequence test.sb                                                          
-    if sequenceViewer is in your directory but octopi.py is right outside of it:                                           
-    hairball -k ../octopi.py -d . -p sequenceViewer.Sequence test.sb                                                       
-    If they're both right outside of it:                                                                                   
-    hairball -k ../octopi.py -d .. -p sequenceViewer.Sequence test.sb                                                      
+'''How to run this plugin:
+        hairball -k <path>/octopi.py -d <folder where sequenceViewer is> -p sequenceViewer.Sequence test.sb
+        For example, if `octopi.py` and sequenceViewer are both in the directory where you are:
+    hairball -k octopi.py -d . -p sequenceViewer.Sequence test.sb
+    if sequenceViewer is in your directory but octopi.py is right outside of it:
+    hairball -k ../octopi.py -d . -p sequenceViewer.Sequence test.sb
+    If they're both right outside of it:
+    hairball -k ../octopi.py -d .. -p sequenceViewer.Sequence test.sb
 '''
 
 BASE_PATH = './results'
@@ -27,10 +27,10 @@ class geographyBroadcast(KelpPlugin):
     def __init__(self):
         super(geographyBroadcast, self).__init__()
 
-        """Returns a dictionary of the scripts.                                                
-        Keys: start events                                                                     
-        Values: another dictionary                                                             
-        Keys: sprite names                                                                     
+        """Returns a dictionary of the scripts.
+        Keys: start events
+        Values: another dictionary
+        Keys: sprite names
         Values: that sprite's scripts for this start event ."""
 
     # sprites = car's when I receive scripts
@@ -80,10 +80,13 @@ class geographyBroadcast(KelpPlugin):
                                     say['Los Angeles'] = 1
                             elif bubble[0] == 'f':
                                 say['Fresno'] = 1
-                                                        
+
                     # check go to block
-                    elif 'go to %s' in name:
-                        if city in block.args[0]:
+                    elif 'go to %s' in name or 'glide to %s' in name:
+                        if block.args[0] and city in block.args[0]:
+                            drive[sprites[city]] = True
+                    elif name == 'glide %s to %s':
+                    	if block.args[1] and city in block.args[1]:
                             drive[sprites[city]] = True
                     # use the other sprite's coordinates (in coordinates dictionary)
                     elif 'go to x:%s y:%s' in name:
@@ -188,7 +191,7 @@ def geography_display(results):
                     html.append(', {0}'.format(spelling[n+1]))
                 html.append(' and {0} incorrectly.</h2>'.format(spelling[-1]))
 
-    # does the car drive to each city? 
+    # does the car drive to each city?
     html.append('<h1><br>Part 2: Make the car drive to each of the cities</h1>')
     correct = []
     incorrect = []
@@ -222,6 +225,6 @@ def geography_display(results):
                 for n in range(len(incorrect)-2):
                     html.append(', {0}'.format(incorrect[n+1]))
                 html.append(' and {0} when you click them.</h2>'.format(incorrect[-1]))
-            
+
     return ''.join(html)
 
