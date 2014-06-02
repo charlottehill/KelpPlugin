@@ -28,21 +28,17 @@ LOCATIONS = {'bear': (Point(51, 91), 100),
              'horse': (Point(128, -26), 90),
              'snake': (Point(134, -126), 50),
              'zebra': (Point(-143, -115), 100)}
+NET_POSITION = Point(-190, 72)
 OUTPUT_HEADER = False
 
 
 def compute_intersections(start, end, data):
+    assert start != end
+    assert -244 <= end.x <= 243 and -183 <= end.y <= 183
+    assert -244 <= start.x <= 243 and -183 <= start.y <= 183
     for sprite_name, (sprite_pos, radius) in LOCATIONS.items():
-        segment = start, end
-        if seg_distance(segment, sprite_pos) < radius:
+        if seg_distance((start, end), sprite_pos) < radius:
             data[sprite_name] += 1
-    if end.x < -244 or end.x > 243:
-        data['#invalid_x'] += 1
-        end = Point(max(-244, min(243, end.x)), end.y)
-    elif end.y < -183 or end.y > 183:
-        data['#invalid_y'] += 1
-        end = Point(end.x, max(-183, min(183, end.y)))
-
 
 def normalize(value):
     """Convert boolean to 0 or 1 string."""
@@ -52,31 +48,37 @@ def normalize(value):
         return str(value)
 
 
+def point_distance(p1, p2):
+    """Return the distance between two points."""
+    return math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2)
+
+
 def seg_distance(seg, point):
-    # find the distance between the point and line segment
+    """Return the minimum distance between the line segment and point."""
+    assert seg[0] != seg[1]
     dx = seg[1].x - seg[0].x
     dy = seg[1].y - seg[0].y
     u = ((point.x - seg[0].x) * dx +
          (point.y - seg[0].y) * dy) / float(dx ** 2 + dy ** 2)
     u = max(0, min(u, 1))
-    return math.sqrt((seg[0].x + u * dx - point.x) ** 2 +
-                     (seg[0].y + u * dy - point.y) ** 2)
+    return point_distance(point, Point(seg[0].x + u * dx, seg[0].y + u * dy))
 
 
 def move(position, orientation, distance):
+    """Return the result of moving distance in orientation from position."""
     rad = math.radians(orientation)
     return Point(position.x + math.sin(rad) * distance,
                  position.y + math.cos(rad) * distance)
 
 
 def rotate_to(src, dst):
+    """Return the orientation necessary for src to point towards dst."""
     return (90 - math.degrees(math.atan2(dst.y - src.y, dst.x - src.x))) % 360
 
 
 def dynamic_analysis(blocks, attrs, data):
-    # net's position is initialized in a hidden script
-    net_orientation = 90
-    net_position = Point(-190, 72)
+    net_position = data.get('net_position', NET_POSITION)
+    net_orientation = data.get('net_orientation', 90)
     initial_orientation = True
 
     # iterate through the script and calculate where the net goes
@@ -121,6 +123,21 @@ def dynamic_analysis(blocks, attrs, data):
                 data['#unmoved'] += 1
                 continue
             next_position = move(net_position, net_orientation, distance)
+
+            # Fix next position within boundaries
+            if next_position.x < -244 or next_position.x > 243:
+                data['#invalid_x'] += 1
+                next_position = Point(max(-244, min(243, next_position.x)),
+                                      next_position.y)
+            if next_position.y < -183 or next_position.y > 183:
+                data['#invalid_y'] += 1
+                next_position = Point(next_position.x,
+                                      max(-183, min(183, next_position.y)))
+            if net_position == next_position:
+                data['#unmoved'] += 1
+                continue
+
+
             compute_intersections(net_position, next_position, data)
             net_position = next_position
         elif name == 'point towards %s':
@@ -142,11 +159,16 @@ def dynamic_analysis(blocks, attrs, data):
                 data['#invalid_target'] += 1
                 continue
             next_position = LOCATIONS[dst][0]
-            net_orientation = rotate_to(net_position, next_position)
+            # Glide to does not actually change the orientation
+            # net_orientation = rotate_to(net_position, next_position)
             compute_intersections(net_position, next_position, data)
             net_position = next_position
         elif name not in ('when this sprite clicked',):
             print('OTHER_COUNTER: {} ({})'.format(name))
+
+    # Save the computed final net position
+    data['net_position'] = net_position
+    data['net_orientation'] = net_orientation
 
     if 'snake' not in attrs:
         data['snake'] = ''
@@ -163,19 +185,6 @@ class Base(KelpPlugin):
             attrs = ('direction', 'position', 'is_visible', 'size')
             return {x: getattr(sprite, x) for x in attrs}
 
-        def posfix(sprite):
-            """This hack correctly returns the position of the sprite.
-
-            This is needed because for whatever reason the student version of
-            octopi saves sprites with some offset.
-
-            """
-            x1, y1, x2, y2 = scratch._original[1].submorphs[0].owner \
-                .bounds.value
-            assert x2 - x1 == 480
-            assert y2 - y1 == 360
-            return Point(sprite.position[0] - x1, sprite.position[1] - y1)
-
         data = {x: 0 for x in KEYS}
 
         # find the list of blocks for Net::OnMouseClicked
@@ -183,7 +192,6 @@ class Base(KelpPlugin):
         for sprite in scratch.sprites:
             attrs[sprite.name.lower()] = initial_attributes(sprite)
 
-        saved_net_pos = posfix(sprite)
         blocks = []
         other_blocks = 0
         scripts = 0
@@ -206,6 +214,43 @@ class Base(KelpPlugin):
         data['!scripts'] = scripts
 
         return blocks, attrs, data
+
+    def net_position_analysis(self, scratch, computed_net_position):
+        """Return the location of the net or distance from computed."""
+
+        def posfix(sprite):
+            """This hack correctly returns the position of the sprite.
+
+            This is needed because for whatever reason the student version of
+            octopi saves sprites with some offset.
+
+            """
+            x1, y1, x2, y2 = scratch._original[1].submorphs[0].owner \
+                .bounds.value
+            assert x2 - x1 == 480
+            assert y2 - y1 == 360
+            return Point(sprite.position[0] - x1, sprite.position[1] + y1)
+
+        # Determine if the Net is at the start or computed position
+        saved_net_position = None
+        for sprite in scratch.sprites:
+            if sprite.name == 'Net':
+                saved_net_position = posfix(sprite)
+                break
+        if not saved_net_position:
+            return 'UNMOVED'
+        start_distance = point_distance(saved_net_position, NET_POSITION)
+        distance = point_distance(saved_net_position, computed_net_position)
+        if computed_net_position == NET_POSITION:
+            return 'UNMOVED'
+        elif saved_net_position == NET_POSITION:
+            return 'START'
+        elif distance < 6:
+            return 'COMPUTED'
+        elif start_distance < 6:
+            return 'CLOSE TO START'
+        else:
+            return '{:.04f}'.format(distance)
 
     def net_scripts(self, scratch):
         """Generate the scripts that belong to the Net sprite."""
@@ -244,6 +289,12 @@ class ByStudent(Base):
     def info(self, filename):
         return filename.split('/')[-2:]
 
+    def is_similar(self, student, blocks):
+        """Return if the student's previous submission has the same blocks."""
+        retval = student in self._prev and self._prev[student] == blocks
+        self._prev[student] = blocks
+        return retval
+
     def finalize(self):
         output_heading = True
         keys = None
@@ -252,6 +303,82 @@ class ByStudent(Base):
                 keys = sorted(results.keys())
                 print(', '.join(['student'] + keys))
             print(', '.join([student] + [normalize(results[x]) for x in keys]))
+
+
+class DoubleClick(ByStudent):
+    def analyze(self, scratch, filename, **kwargs):
+        student, submission = self.info(filename)
+
+        student_data = self.by_student.setdefault(student, {})
+        if not student_data:  # Initialize the data on first submission
+            for attr in ('double_click', 'high_prob_1', 'high_prob_mult',
+                         'start', 'invalid_pos', 'sprite_click'):
+                student_data[attr] = 0
+        if student_data.get('passed', False):
+            # Ignore submissions after a passed submission
+            return
+
+        blocks, attrs, data = self.get_blocks_and_attrs(scratch)
+        if self.is_similar(student, blocks): # Skip similar submissions
+            return
+        dynamic_analysis(blocks, attrs, data)
+
+        objects_picked = sum(data[x] > 0 for x in LOCATIONS)
+        if objects_picked > 1:
+            # If at least two objects are picked up the student demonstrates
+            # partial understanding
+            student_data['passed'] = True
+            return
+
+        net = self.net_position_analysis(scratch, data['net_position'])
+        if data['!scripts'] == 0:  # Ignore submissions with no scripts
+            assert net == 'UNMOVED'
+            return
+        elif net == 'UNMOVED':
+            if data['#blocks'] > 0 and data['!scripts'] == 1:
+                # Ignore submissions with no movement and no unexpected scripts
+                return
+            elif data['!scripts'] == 1:
+                student_data['high_prob_1'] += 1
+            else:
+                student_data['high_prob_mult'] += 1
+        elif net == 'COMPUTED':
+            assert data['net_position'] != NET_POSITION
+            # If the net ends where we expect it then it is not double clicking
+            return
+
+        if net == 'START':
+            student_data['start'] += 1
+        elif net != 'UNMOVED':
+            # Save
+            invalid_pos = data['#invalid_x'] > 0 or data['#invalid_y'] > 0
+            # Check if the net was clicked a up to N times
+            for i in range(8):  # None occur more than 8 times
+                if data['#invalid_x'] > 0 or data['#invalid_y'] > 0:
+                    break
+                dynamic_analysis(blocks, attrs, data)
+                net = self.net_position_analysis(scratch, data['net_position'])
+                if net == 'COMPUTED':
+                    student_data['sprite_click'] += 1
+                    return
+            if invalid_pos:  # Increment invalid position count
+                student_data['invalid_pos'] += 1
+        sys.stderr.write('{} {}\n'.format(student, submission))
+        student_data['double_click'] += 1  # Potential double clicking
+
+    def finalize(self):
+        for key in sorted(self.by_student.keys()):
+            if key.startswith('click_'):
+                print('{}: {}'.format(key, self.by_student[key]))
+                del self.by_student[key]
+
+        for student in self.by_student.keys():
+            tmp = self.by_student[student]
+            if tmp['double_click'] == tmp['sprite_click'] == 0:
+                del self.by_student[student]
+            elif 'passed' not in tmp:
+                tmp['passed'] = False
+        super(DoubleClick, self).finalize()
 
 
 class AllBlocks(ByStudent):
@@ -306,6 +433,8 @@ class MovementType(ByStudent):
 
         # Determine if it worked as expected
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
+        if self.is_similar(student, blocks): # Skip similar submissions
+            return
         if not passed:
             student_data['passed'] = dynamic_analysis(blocks, attrs, data)
 
@@ -354,16 +483,11 @@ class PostPassed(ByStudent):
 
         # Fetch blocks and attrs
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
-
-        # Don't include if the blocks did not change
-        if student in self._prev and self._prev[student] == blocks:
+        if self.is_similar(student, blocks): # Skip similar submissions
             return
-        self._prev[student] = blocks
-
-        glide_to = any(x[0] for x in blocks if x[0] in self.BLOCKS)
-        if glide_to:  # Skip submission if they used glide to
+        if any(x[0] for x in blocks if x[0] in self.BLOCKS):
+            # Skip submission if they used glide to
             return
-
         # Determine if it worked as expected
         cur_passed = dynamic_analysis(blocks, attrs, data)
 
@@ -392,6 +516,51 @@ class PostPassed(ByStudent):
         super(PostPassed, self).finalize()
 
 
+class ClassStats(ByStudent):
+    """Plugin to provide basic statistics based on a per-class basis."""
+    def analyze(self, scratch, filename, **kwargs):
+        student, submission = self.info(filename)
+
+        class_name = student[:-2]
+        if class_name not in self.by_student:
+            class_data = {'subs_passed': 0, 'subs_failed': 0,
+                          'students_passed': set(), 'students_failed': set()}
+            self.by_student[class_name] = class_data
+        else:
+            class_data = self.by_student[class_name]
+
+        # Fetch blocks and attrs
+        blocks, attrs, data = self.get_blocks_and_attrs(scratch)
+        if self.is_similar(student, blocks): # Skip similar submissions
+            return
+        # Determine if it worked as expected
+        passed = dynamic_analysis(blocks, attrs, data)
+
+        if passed:
+            class_data['subs_passed'] += 1
+            if student in class_data['students_failed']:
+                class_data['students_failed'].remove(student)
+            class_data['students_passed'].add(student)
+        else:
+            class_data['subs_failed'] += 1
+            if student not in class_data['students_passed']:
+                class_data['students_failed'].add(student)
+
+    def finalize(self):
+        def norm(data):
+            if isinstance(data, set):
+                return str(len(data))
+            else:
+                return str(data)
+        attrs = None
+        for class_name, class_data in sorted(self.by_student.items()):
+            if attrs is None:
+                attrs = sorted(class_data)
+                print(', '.join(['class_name'] + attrs))
+            print(', '.join([class_name]
+                            + [norm(class_data[x]) for x in attrs]))
+
+
 class Predator(Base):
     """Output statistics on the MammalsGame and AnimalsGame project."""
 
@@ -403,8 +572,13 @@ class Predator(Base):
     def analyze(self, scratch, filename, **kwargs):
         # TODO: Verify initial position and orientation (other attributes too?)
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
+        if self.is_similar(student, blocks): # Skip similar submissions
+            return
         # Determine if it worked as expected
         passed = dynamic_analysis(blocks, attrs, data)
+
+        data['net'] = self.net_position_analysis(scratch, data['net_position'])
+        del data['net_position']
 
         output = [normalize(x[1]) for x in sorted(data.items())]
         global OUTPUT_HEADER
