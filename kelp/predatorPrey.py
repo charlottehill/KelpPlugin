@@ -9,7 +9,6 @@ Run via:
 from __future__ import print_function
 from collections import Counter, namedtuple
 from kelpplugin import KelpPlugin
-from itertools import chain
 from pprint import pprint
 import kurt
 import math
@@ -31,6 +30,17 @@ LOCATIONS = {'bear': (Point(51, 91), 100),
 NET_POSITION = Point(-190, 72)
 OUTPUT_HEADER = False
 
+APPROACH_BLOCKS = {'point in direction %s': 'abs_ori',
+                   'turn @turnLeft %s degrees': 'rel_ori',
+                   'turn @turnRight %s degrees': 'rel_ori',
+                   'point towards %s': 'oth_ori',
+                   'when this sprite clicked': None,
+                   '%s glide %s steps': 'abs_pos',
+                   'glide %s steps': 'abs_pos',
+                   'glide %s to %s': 'pos_ori',
+                   'glide to %s': 'pos_ori'}
+APPROACH_TYPES = ('abs_ori', 'rel_ori', 'oth_ori', 'abs_pos', 'pos_ori')
+
 
 def compute_intersections(start, end, data):
     assert start != end
@@ -39,6 +49,7 @@ def compute_intersections(start, end, data):
     for sprite_name, (sprite_pos, radius) in LOCATIONS.items():
         if seg_distance((start, end), sprite_pos) < radius:
             data[sprite_name] += 1
+
 
 def normalize(value):
     """Convert boolean to 0 or 1 string."""
@@ -136,7 +147,6 @@ def dynamic_analysis(blocks, attrs, data):
             if net_position == next_position:
                 data['#unmoved'] += 1
                 continue
-
 
             compute_intersections(net_position, next_position, data)
             net_position = next_position
@@ -283,7 +293,7 @@ class ByStudent(Base):
         """Additionally keep track of submissions by student."""
         super(ByStudent, self).__init__()
         self.by_student = {}
-        self._prev = {}
+        self._prev = {}  # used by is_similar
         self._last_filename = None
 
     def info(self, filename):
@@ -296,7 +306,6 @@ class ByStudent(Base):
         return retval
 
     def finalize(self):
-        output_heading = True
         keys = None
         for student, results in sorted(self.by_student.items()):
             if keys is None:
@@ -319,7 +328,7 @@ class DoubleClick(ByStudent):
             return
 
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
-        if self.is_similar(student, blocks): # Skip similar submissions
+        if self.is_similar(student, blocks):  # Skip similar submissions
             return
         dynamic_analysis(blocks, attrs, data)
 
@@ -403,19 +412,35 @@ class AllBlocks(ByStudent):
             pprint(results.most_common())
 
 
+class ApproachBySub(ByStudent):
+    """Keep track of the approach used on an individual submission."""
+    def analyze(self, scratch, filename, **kwargs):
+        student, submission = self.info(filename)
+        blocks, attrs, data = self.get_blocks_and_attrs(scratch)
+        if self.is_similar(student, blocks):  # Skip similar submissions
+            return
+
+        counts = {x: 0 for x in APPROACH_TYPES}
+        counts['Passed'] = int(dynamic_analysis(blocks, attrs, data))
+
+        for name, _, _ in blocks:
+            block_type = APPROACH_BLOCKS[name]
+            if block_type:
+                counts[block_type] += 1
+
+        self.by_student[(student, submission)] = counts
+
+    def finalize(self):
+        keys = None
+        for (student, submission), results in sorted(self.by_student.items()):
+            if keys is None:
+                keys = sorted(results.keys())
+                print(', '.join(['student', 'submission'] + keys))
+            print(', '.join([student, submission]
+                            + [normalize(results[x]) for x in keys]))
+
+
 class MovementType(ByStudent):
-    BLOCKS = {'point in direction %s': 'abs_ori',
-              'turn @turnLeft %s degrees': 'rel_ori',
-              'turn @turnRight %s degrees': 'rel_ori',
-              'point towards %s': 'oth_ori',
-              'when this sprite clicked': None,
-              '%s glide %s steps': 'abs_pos',
-              'glide %s steps': 'abs_pos',
-              'glide %s to %s': 'pos_ori',
-              'glide to %s': 'pos_ori'}
-    TYPES = ('abs_ori', 'rel_ori', 'oth_ori', 'abs_pos', 'pos_ori')
-
-
     def analyze(self, scratch, filename, **kwargs):
         assert self._last_filename < filename
         self._last_filename = filename
@@ -424,7 +449,7 @@ class MovementType(ByStudent):
         student_data = self.by_student.setdefault(student, {})
         if not student_data:  # Initialize the data on first submission
             student_data['attempts'] = 0
-            for block_type in self.TYPES:
+            for block_type in APPROACH_TYPES:
                 student_data[block_type] = 0
                 student_data['{}_all'.format(block_type)] = 0
         passed = student_data.get('passed', False)
@@ -433,20 +458,20 @@ class MovementType(ByStudent):
 
         # Determine if it worked as expected
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
-        if self.is_similar(student, blocks): # Skip similar submissions
+        if self.is_similar(student, blocks):  # Skip similar submissions
             return
         if not passed:
             student_data['passed'] = dynamic_analysis(blocks, attrs, data)
 
-        all_type_counts = {x: 0 for x in self.TYPES}
-        upto_last_counts = {x: 0 for x in self.TYPES}
+        all_type_counts = {x: 0 for x in APPROACH_TYPES}
+        upto_last_counts = {x: 0 for x in APPROACH_TYPES}
 
         # For all blocks use the following
-        #blocks = list(chain.from_iterable(self.iter_blocks(x.blocks) for x
-        #                                  in self.net_scripts(scratch)))
+        # blocks = list(chain.from_iterable(self.iter_blocks(x.blocks) for x
+        #                                   in self.net_scripts(scratch)))
 
         for name, _, _ in blocks:
-            block_type = self.BLOCKS[name]
+            block_type = APPROACH_BLOCKS[name]
             if block_type:
                 all_type_counts[block_type] += 1
                 if not passed:
@@ -456,6 +481,10 @@ class MovementType(ByStudent):
             student_data['{}_all'.format(block_type)] += count > 0
 
         if passed:  # Don't need to update the following values
+            return
+        elif '{}_last'.format(APPROACH_TYPES[0]) in student_data \
+                and sum(upto_last_counts.values()) == 0:
+            # Only include empty submissions if there isn't already one
             return
 
         for block_type, count in upto_last_counts.items():
@@ -483,9 +512,9 @@ class PostPassed(ByStudent):
 
         # Fetch blocks and attrs
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
-        if self.is_similar(student, blocks): # Skip similar submissions
+        if self.is_similar(student, blocks):  # Skip similar submissions
             return
-        if any(x[0] for x in blocks if x[0] in self.BLOCKS):
+        if any(x[0] for x in blocks if x[0] in APPROACH_BLOCKS):
             # Skip submission if they used glide to
             return
         # Determine if it worked as expected
@@ -495,7 +524,7 @@ class PostPassed(ByStudent):
             self.by_student[student]['post_submissions'] += 1
 
         if cur_passed and not passed:
-            student_data = {'passed':True, 'post_submissions': 0,
+            student_data = {'passed': True, 'post_submissions': 0,
                             'post_passed': 0}
             self.by_student[student] = student_data
         elif passed:
@@ -531,7 +560,7 @@ class ClassStats(ByStudent):
 
         # Fetch blocks and attrs
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
-        if self.is_similar(student, blocks): # Skip similar submissions
+        if self.is_similar(student, blocks):  # Skip similar submissions
             return
         # Determine if it worked as expected
         passed = dynamic_analysis(blocks, attrs, data)
@@ -572,8 +601,6 @@ class Predator(Base):
     def analyze(self, scratch, filename, **kwargs):
         # TODO: Verify initial position and orientation (other attributes too?)
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
-        if self.is_similar(student, blocks): # Skip similar submissions
-            return
         # Determine if it worked as expected
         passed = dynamic_analysis(blocks, attrs, data)
 
