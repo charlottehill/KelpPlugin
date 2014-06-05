@@ -8,6 +8,7 @@ Run via:
 
 from __future__ import print_function
 from collections import Counter, namedtuple
+from itertools import chain
 from kelpplugin import KelpPlugin
 from pprint import pprint
 import kurt
@@ -495,7 +496,7 @@ class MovementType(ByStudent):
 class PostPassed(ByStudent):
     """Plugin to inspect changes made once a correct solution was created.
 
-    Excludes students who used glide_to.
+    Excludes submissions using glide to.
 
     """
     BLOCKS = ('glide %s to %s', 'glide to %s')
@@ -514,7 +515,7 @@ class PostPassed(ByStudent):
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
         if self.is_similar(student, blocks):  # Skip similar submissions
             return
-        if any(x[0] for x in blocks if x[0] in APPROACH_BLOCKS):
+        if any(x[0] for x in blocks if x[0] in self.BLOCKS):
             # Skip submission if they used glide to
             return
         # Determine if it worked as expected
@@ -543,6 +544,244 @@ class PostPassed(ByStudent):
             else:
                 del self.by_student[student]['passed']
         super(PostPassed, self).finalize()
+
+
+class RaceCondition(ByStudent):
+    """Plugin to detect potential race-condition issues with the Zebra."""
+    FORWARD_50 = (kurt.Block('forward:elapsed:from:', 50),
+                  kurt.Block('speed:forward:elapsed:from:', 'slow', 50),
+                  kurt.Block('speed:forward:elapsed:from:', 'medium', 50),
+                  kurt.Block('speed:forward:elapsed:from:', 'fast', 50))
+    FORWARD_100 = (kurt.Block('forward:elapsed:from:', 100),
+                   kurt.Block('speed:forward:elapsed:from:', 'slow', 100),
+                   kurt.Block('speed:forward:elapsed:from:', 'medium', 100),
+                   kurt.Block('speed:forward:elapsed:from:', 'fast', 100))
+    FORWARD_150 = (kurt.Block('forward:elapsed:from:', 150),
+                   kurt.Block('speed:forward:elapsed:from:', 'slow', 150),
+                   kurt.Block('speed:forward:elapsed:from:', 'medium', 150),
+                   kurt.Block('speed:forward:elapsed:from:', 'fast', 150))
+    FORWARD_MANY = (kurt.Block('forward:elapsed:from:', 200),
+                    kurt.Block('speed:forward:elapsed:from:', 'slow', 200),
+                    kurt.Block('speed:forward:elapsed:from:', 'medium', 200),
+                    kurt.Block('speed:forward:elapsed:from:', 'fast', 200),
+                    kurt.Block('forward:elapsed:from:', 250),
+                    kurt.Block('speed:forward:elapsed:from:', 'slow', 250),
+                    kurt.Block('speed:forward:elapsed:from:', 'medium', 250),
+                    kurt.Block('speed:forward:elapsed:from:', 'fast', 250),
+                    kurt.Block('forward:elapsed:from:', 300),
+                    kurt.Block('speed:forward:elapsed:from:', 'slow', 300),
+                    kurt.Block('speed:forward:elapsed:from:', 'medium', 300),
+                    kurt.Block('speed:forward:elapsed:from:', 'fast', 300))
+    POINT_DOWN = kurt.Block('heading:', 180), kurt.Block('heading:', u'down')
+    POINT_LEFT = kurt.Block('heading:', -90), kurt.Block('heading:', u'left')
+    POINT_RIGHT = kurt.Block('heading:', 90), kurt.Block('heading:', u'right')
+    POINT_UP = kurt.Block('heading:', 0), kurt.Block('heading:', u'up')
+    POINT_TO_OTHER = (kurt.Block('pointTowards:', u'Horse'),
+                      kurt.Block('pointTowards:', u'Bear'))
+    POINT_TO_ZEBRA = kurt.Block('pointTowards:', u'Zebra')
+    GLIDE_TO_ZEBRA = (kurt.Block('glidetoSpriteOrMouse:elapsed:from:',
+                                 u'Zebra'),
+                      kurt.Block('glide:toSpriteOrMouse:elapsed:from:', 'slow',
+                                 u'Zebra'),
+                      kurt.Block('glide:toSpriteOrMouse:elapsed:from:',
+                                 'medium', u'Zebra'),
+                      kurt.Block('glide:toSpriteOrMouse:elapsed:from:', 'fast',
+                                 u'Zebra'))
+    GLIDE_TO_OTH = (kurt.Block('glidetoSpriteOrMouse:elapsed:from:', u'Bear'),
+                    kurt.Block('glidetoSpriteOrMouse:elapsed:from:', u'Horse'),
+                    kurt.Block('glide:toSpriteOrMouse:elapsed:from:', 'slow',
+                               u'Bear'),
+                    kurt.Block('glide:toSpriteOrMouse:elapsed:from:', 'slow',
+                               u'Horse'),
+                    kurt.Block('glide:toSpriteOrMouse:elapsed:from:', 'medium',
+                               u'Bear'),
+                    kurt.Block('glide:toSpriteOrMouse:elapsed:from:', 'medium',
+                               u'Horse'),
+                    kurt.Block('glide:toSpriteOrMouse:elapsed:from:', 'fast',
+                               u'Bear'),
+                    kurt.Block('glide:toSpriteOrMouse:elapsed:from:', 'fast',
+                               u'Horse'))
+    NOP = (kurt.Block('heading:', None),
+           kurt.Block('forward:elapsed:from:', 0),
+           kurt.Block('glidetoSpriteOrMouse:elapsed:from:', None),
+           kurt.Block('glide:toSpriteOrMouse:elapsed:from:', 'slow', None),
+           kurt.Block('glide:toSpriteOrMouse:elapsed:from:', 'medium', None),
+           kurt.Block('glide:toSpriteOrMouse:elapsed:from:', 'fast', None))
+    INVALID = (kurt.Block('glidetoSpriteOrMouse:elapsed:from:',
+                          'mouse-pointer'),
+               kurt.Block('glide:toSpriteOrMouse:elapsed:from:', 'slow',
+                          'mouse-pointer'),
+               kurt.Block('glide:toSpriteOrMouse:elapsed:from:', 'medium',
+                          'mouse-pointer'),
+               kurt.Block('glide:toSpriteOrMouse:elapsed:from:', 'fast',
+                          'mouse-pointer'))
+    TURN_CCW_90 = kurt.Block('turnLeft:', 90)
+    TURN_CW_90 = kurt.Block('turnRight:', 90)
+
+    def is_match(self, blocks):
+        state = 0  # Start
+        block_num = 0
+        while block_num < len(blocks):
+            name, _, block = blocks[block_num]
+            info = state, block_num, name
+            prev_state = state
+            # General exit conditions
+            if block in self.INVALID:
+                return 'invalid'
+
+            if state == 0:
+                if block != kurt.Block('whenClicked'):
+                    return False
+                state = 1
+            elif state == 1:  # At start, pointing right
+                if block in self.POINT_RIGHT:
+                    prev_state = None
+                elif block in chain([self.TURN_CCW_90], self.POINT_LEFT,
+                                    self.POINT_UP, self.POINT_TO_OTHER):
+                    state = 2  # May result in subsequent rotation
+                elif block in self.FORWARD_50:
+                    state = 3
+                elif block in chain([self.POINT_TO_ZEBRA, self.TURN_CW_90],
+                                    self.POINT_DOWN):
+                    state = 4
+                elif block in chain(self.FORWARD_100, self.FORWARD_150,
+                                    self.FORWARD_MANY, self.GLIDE_TO_OTH,
+                                    self.GLIDE_TO_ZEBRA):
+                    return False  # Ignore commonly occuring sequence
+            elif state == 2:  # At start pointing in useless direction
+                if block in self.POINT_TO_OTHER:
+                    prev_state = None  # Indicate handling
+                elif block in self.POINT_RIGHT:
+                    state = 1
+                elif block in chain(self.POINT_DOWN, [self.POINT_TO_ZEBRA]):
+                    state = 4
+                elif block in chain(self.FORWARD_50, self.FORWARD_100,
+                                    self.FORWARD_150, self.FORWARD_MANY,
+                                    self.GLIDE_TO_OTH, self.GLIDE_TO_ZEBRA):
+                    return False  # Ignore commonly occuring sequence
+            elif state == 3:  # 50 steps to the left of start, pointing right
+                if block in self.POINT_RIGHT:
+                    prev_state = None  # Indicate handling
+                elif block in chain([self.TURN_CW_90], self.POINT_DOWN):
+                    state = 4
+                elif block in chain(self.FORWARD_50, self.GLIDE_TO_OTH):
+                    return False  # Handle common situation
+            elif 4 <= state <= 6:
+                # Pointing down, or towards zebra at some 50 step
+                # interval below and/or to the right of the start
+                if block in self.POINT_DOWN:
+                    prev_state = None  # Indicate handling
+                elif block in self.FORWARD_50:
+                    state += 1
+                elif block in self.FORWARD_100 and state < 6:
+                    state += 2
+                elif block in self.FORWARD_150 and state < 5:
+                    state += 1
+                elif block in self.GLIDE_TO_ZEBRA:
+                    return 'post_glide'
+                elif block in chain(self.FORWARD_100, self.FORWARD_150,
+                                    self.FORWARD_MANY, self.GLIDE_TO_OTH,
+                                    self.POINT_RIGHT):
+                    return False  # Ignore commonly occuring sequence
+            elif state == 7:  # Intersecting with the Zebra
+                if block in chain([self.TURN_CW_90],
+                                  self.POINT_DOWN, self.POINT_LEFT):
+                    prev_state = None  # Indicate handling
+                elif block in chain([self.TURN_CCW_90],
+                                    self.POINT_RIGHT, self.POINT_UP,
+                                    self.POINT_TO_OTHER):
+                    return 'issue'
+                elif block in self.GLIDE_TO_OTH:
+                    return 'post_glide'
+                elif block in self.GLIDE_TO_ZEBRA:
+                    return 'fix'
+                elif name == 'glide %s steps':
+                    if block not in self.NOP:
+                        return 'fix'
+            if prev_state == state and block not in self.NOP:
+                # Unhandled situation
+                self.by_student['nexts'][info] += 1
+                return False
+            block_num += 1
+        return False
+
+    def analyze(self, scratch, filename, **kwargs):
+        if not isinstance(self.by_student, Counter):
+            self.by_student = Counter()
+            self.by_student['nexts'] = Counter()
+        blocks, attrs, data = self.get_blocks_and_attrs(scratch)
+        match = self.is_match(blocks)
+
+        # Fix is only interesting if it comes after issue
+        if match:
+            self.by_student[match] += 1
+
+    def finalize(self):
+        for value, count in self.by_student['nexts'].most_common(20):
+            print(count, value)
+        print('Unhandled: {}'.format(sum(self.by_student['nexts'].values())))
+        del self.by_student['nexts']
+        print(self.by_student)
+
+
+class PostTwoSprite(ByStudent):
+    """Plugin to inspect changes made once two sprites are picked up.
+
+    Excludes submissions using glide_to.
+
+    """
+    BLOCKS = ('glide %s to %s', 'glide to %s')
+
+    def analyze(self, scratch, filename, **kwargs):
+        def num_sprites(data):
+            return sum(data[x] > 0 for x in ('bear', 'horse', 'zebra'))
+
+        sys.stderr.write('.')
+        sys.stderr.flush()
+        assert self._last_filename < filename
+        self._last_filename = filename
+
+        student, submission = self.info(filename)
+        twosprite = student in self.by_student and \
+            self.by_student[student].get('twosprite', False)
+        if student in self.by_student and \
+                self.by_student[student].get('passed', False):
+            # For this plugin skip submissions once the student passes
+            return
+
+        # Fetch blocks and attrs
+        blocks, attrs, data = self.get_blocks_and_attrs(scratch)
+        if self.is_similar(student, blocks):  # Skip similar submissions
+            return
+        if any(x[0] for x in blocks if x[0] in self.BLOCKS):
+            # Skip submission if they used glide to
+            return
+        # Determine if it worked as expected
+        cur_passed = dynamic_analysis(blocks, attrs, data)
+        cur_twosprite = num_sprites(data) > 1
+
+        if cur_passed:
+            assert cur_twosprite
+
+        if twosprite:
+            self.by_student[student]['post_submissions'] += 1
+
+        if cur_twosprite and not twosprite:
+            student_data = {'passed': cur_passed, 'post_submissions': 0,
+                            'post_twosprite': 0, 'twosprite': True}
+            self.by_student[student] = student_data
+        elif cur_twosprite:
+            self.by_student[student]['post_twosprite'] += int(cur_twosprite)
+            if cur_passed:
+                self.by_student[student]['passed'] = True
+
+    def finalize(self):
+        for student in self.by_student.keys():
+            if self.by_student[student]['post_submissions'] == 0:
+                del self.by_student[student]
+            else:
+                del self.by_student[student]['twosprite']
+        super(PostTwoSprite, self).finalize()
 
 
 class ClassStats(ByStudent):
