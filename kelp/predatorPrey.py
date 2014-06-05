@@ -56,6 +56,8 @@ def normalize(value):
     """Convert boolean to 0 or 1 string."""
     if isinstance(value, bool):
         return '1' if value else '0'
+    elif isinstance(value, list):
+        return ' '.join(str(x) for x in value)
     else:
         return str(value)
 
@@ -680,8 +682,9 @@ class RaceCondition(ByStudent):
                 elif block in self.GLIDE_TO_ZEBRA:
                     return 'post_glide'
                 elif block in chain(self.FORWARD_100, self.FORWARD_150,
-                                    self.FORWARD_MANY, self.GLIDE_TO_OTH,
-                                    self.POINT_RIGHT):
+                                    self.FORWARD_MANY):
+                    return 'fix'
+                elif block in chain(self.GLIDE_TO_OTH, self.POINT_RIGHT):
                     return False  # Ignore commonly occuring sequence
             elif state == 7:  # Intersecting with the Zebra
                 if block in chain([self.TURN_CW_90],
@@ -696,32 +699,58 @@ class RaceCondition(ByStudent):
                 elif block in self.GLIDE_TO_ZEBRA:
                     return 'fix'
                 elif name == 'glide %s steps':
-                    if block not in self.NOP:
-                        return 'fix'
+                    return 'fix'
             if prev_state == state and block not in self.NOP:
                 # Unhandled situation
-                self.by_student['nexts'][info] += 1
+                self.by_student['_nexts'][info] += 1
                 return False
             block_num += 1
-        return False
+        return 'initial' if state == 7 else False
 
     def analyze(self, scratch, filename, **kwargs):
-        if not isinstance(self.by_student, Counter):
-            self.by_student = Counter()
-            self.by_student['nexts'] = Counter()
-        blocks, attrs, data = self.get_blocks_and_attrs(scratch)
-        match = self.is_match(blocks)
+        if '_nexts' not in self.by_student:  # First run only
+            self.by_student['_nexts'] = Counter()
 
-        # Fix is only interesting if it comes after issue
+        student, submission = self.info(filename)
+        student_data = self.by_student.setdefault(student, {})
+        if 'issue' not in student_data:  # Initialize on student first
+            for key in ('fix', 'initial', 'invalid', 'issue', 'passed',
+                        'post_glide'):
+                student_data[key] = []
+            student_data['subs'] = 0
+            student_data['matches'] = 0
+
+        # Fetch blocks and attrs
+        blocks, attrs, data = self.get_blocks_and_attrs(scratch)
+        if self.is_similar(student, blocks):  # Skip similar submissions
+            return
+        student_data['subs'] += 1
+        if dynamic_analysis(blocks, attrs, data):
+            student_data['passed'].append(student_data['subs'])
+
+        match = self.is_match(blocks)
         if match:
-            self.by_student[match] += 1
+            student_data[match].append(student_data['subs'])
+            student_data['matches'] += 1
+            if match != 'invalid':
+                assert data['zebra'] > 0
 
     def finalize(self):
-        for value, count in self.by_student['nexts'].most_common(20):
-            print(count, value)
-        print('Unhandled: {}'.format(sum(self.by_student['nexts'].values())))
-        del self.by_student['nexts']
-        print(self.by_student)
+        for value, count in self.by_student['_nexts'].items():
+            if count >= 10:
+                print(count, value)
+        sys.stderr.write('Unhandled: {}\n'
+                         .format(sum(self.by_student['_nexts'].values())))
+        del self.by_student['_nexts']
+        keys = None
+        for student, results in sorted(self.by_student.items()):
+            if results['matches'] == 0:
+                continue
+            del results['subs']
+            if keys is None:
+                keys = sorted(results.keys())
+                print(', '.join(['student'] + keys))
+            print(', '.join([student] + [normalize(results[x]) for x in keys]))
 
 
 class PostTwoSprite(ByStudent):
