@@ -58,6 +58,8 @@ def normalize(value):
         return '1' if value else '0'
     elif isinstance(value, list):
         return ' '.join(str(x) for x in value)
+    elif isinstance(value, set):
+        return str(len(value))
     else:
         return str(value)
 
@@ -315,6 +317,33 @@ class ByStudent(Base):
                 keys = sorted(results.keys())
                 print(', '.join(['student'] + keys))
             print(', '.join([student] + [normalize(results[x]) for x in keys]))
+
+
+class SnapshotChecker(ByStudent):
+    MAMMALS = ('2013-11-14 11:18:27', 'save', 'MammalsGame')
+    ANIMALS = ('2014-1-28 08:36:56', 'save', 'AnimalsGame')
+    """Compare the number of snapshots with the number of saved files."""
+    def analyze(self, scratch, filename, **kwargs):
+        def get_history():
+            history = [tuple(x.strip().split('\t')) for x in
+                       scratch._original[0]['history'].strip().split('\r')]
+            try:
+                return history[history.index(self.ANIMALS) + 1:]
+            except ValueError:
+                return history[history.index(self.MAMMALS) + 1:]
+
+        student, submission = self.info(filename)
+
+        student_data = self.by_student.setdefault(student, {})
+        if not student_data:  # Initialize the data on first submission
+            student_data['files'] = 0
+            for attr in ('saves', 'snapshots'):
+                student_data[attr] = set()
+        history = get_history()
+        snapshots = [x for x in history if '(' in x[2]]
+        student_data['files'] += 1
+        student_data['saves'] |= set(history)
+        student_data['snapshots'] |= set(snapshots)
 
 
 class DoubleClick(ByStudent):
