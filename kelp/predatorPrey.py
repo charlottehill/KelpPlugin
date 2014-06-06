@@ -845,12 +845,15 @@ class PostTwoSprite(ByStudent):
 class ClassStats(ByStudent):
     """Plugin to provide basic statistics based on a per-class basis."""
     def analyze(self, scratch, filename, **kwargs):
+        def num_sprites(data):
+            return sum(data[x] > 0 for x in ('bear', 'horse', 'zebra'))
+
         student, submission = self.info(filename)
 
         class_name = student[:-2]
         if class_name not in self.by_student:
-            class_data = {'subs_passed': 0, 'subs_failed': 0,
-                          'students_passed': set(), 'students_failed': set()}
+            class_data = {'subs': [0, 0, 0, 0],
+                          'students': [set(), set(), set(), set()]}
             self.by_student[class_name] = class_data
         else:
             class_data = self.by_student[class_name]
@@ -861,16 +864,22 @@ class ClassStats(ByStudent):
             return
         # Determine if it worked as expected
         passed = dynamic_analysis(blocks, attrs, data)
-
+        sprites = num_sprites(data)
         if passed:
-            class_data['subs_passed'] += 1
-            if student in class_data['students_failed']:
-                class_data['students_failed'].remove(student)
-            class_data['students_passed'].add(student)
-        else:
-            class_data['subs_failed'] += 1
-            if student not in class_data['students_passed']:
-                class_data['students_failed'].add(student)
+            assert sprites == 3
+
+        # Increment submission count
+        class_data['subs'][sprites] += 1
+
+        existing = None
+        for i, num_set in enumerate(class_data['students']):
+            if student in num_set:
+                existing = i
+        if existing is None:  # Always add
+            class_data['students'][sprites].add(student)
+        elif sprites > existing:  # Remove from former and add
+            class_data['students'][existing].remove(student)
+            class_data['students'][sprites].add(student)
 
     def finalize(self):
         def norm(data):
@@ -878,14 +887,12 @@ class ClassStats(ByStudent):
                 return str(len(data))
             else:
                 return str(data)
-        attrs = None
+        attrs = ['subs_0', 'subs_1', 'subs_2', 'subs_3',
+                 'students_0', 'students_1', 'students_2', 'students_3']
+        print(', '.join(['class_name'] + attrs))
         for class_name, class_data in sorted(self.by_student.items()):
-            if attrs is None:
-                attrs = sorted(class_data)
-                print(', '.join(['class_name'] + attrs))
-            print(', '.join([class_name]
-                            + [norm(class_data[x]) for x in attrs]))
-
+            print(', '.join([class_name] + [str(x) for x in class_data['subs']]
+                            + [norm(x) for x in class_data['students']]))
 
 class Predator(Base):
     """Output statistics on the MammalsGame and AnimalsGame project."""
