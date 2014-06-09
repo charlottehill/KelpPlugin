@@ -93,6 +93,7 @@ def rotate_to(src, dst):
 
 
 def dynamic_analysis(blocks, attrs, data):
+    """Return the number of sprites picked up (excluding the snake)."""
     net_position = data.get('net_position', NET_POSITION)
     net_orientation = data.get('net_orientation', 90)
     initial_orientation = True
@@ -187,9 +188,7 @@ def dynamic_analysis(blocks, attrs, data):
 
     if 'snake' not in attrs:
         data['snake'] = ''
-
-    return (('snake' not in attrs or data['snake'] < 1) and
-            all(data[x] > 0 for x in ('bear', 'horse', 'zebra')))
+    return sum(data[x] > 0 for x in ('bear', 'horse', 'zebra'))
 
 
 class Base(KelpPlugin):
@@ -362,10 +361,7 @@ class DoubleClick(ByStudent):
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
         if self.is_similar(student, blocks):  # Skip similar submissions
             return
-        dynamic_analysis(blocks, attrs, data)
-
-        objects_picked = sum(data[x] > 0 for x in LOCATIONS)
-        if objects_picked > 1:
+        if dynamic_analysis(blocks, attrs, data) > 1:
             # If at least two objects are picked up the student demonstrates
             # partial understanding
             student_data['passed'] = True
@@ -453,7 +449,7 @@ class ApproachBySub(ByStudent):
             return
 
         counts = {x: 0 for x in APPROACH_TYPES}
-        counts['Passed'] = int(dynamic_analysis(blocks, attrs, data))
+        counts['Passed'] = dynamic_analysis(blocks, attrs, data) > 1
 
         for name, _, _ in blocks:
             block_type = APPROACH_BLOCKS[name]
@@ -493,7 +489,7 @@ class MovementType(ByStudent):
         if self.is_similar(student, blocks):  # Skip similar submissions
             return
         if not passed:
-            student_data['passed'] = dynamic_analysis(blocks, attrs, data)
+            student_data['passed'] = dynamic_analysis(blocks, attrs, data) > 1
 
         all_type_counts = {x: 0 for x in APPROACH_TYPES}
         upto_last_counts = {x: 0 for x in APPROACH_TYPES}
@@ -550,7 +546,7 @@ class PostPassed(ByStudent):
             # Skip submission if they used glide to
             return
         # Determine if it worked as expected
-        cur_passed = dynamic_analysis(blocks, attrs, data)
+        cur_passed = dynamic_analysis(blocks, attrs, data) > 1
 
         if passed:
             self.by_student[student]['post_submissions'] += 1
@@ -754,7 +750,7 @@ class RaceCondition(ByStudent):
         if self.is_similar(student, blocks):  # Skip similar submissions
             return
         student_data['subs'] += 1
-        if dynamic_analysis(blocks, attrs, data):
+        if dynamic_analysis(blocks, attrs, data) > 1:
             student_data['passed'].append(student_data['subs'])
 
         match = self.is_match(blocks)
@@ -782,72 +778,9 @@ class RaceCondition(ByStudent):
             print(', '.join([student] + [normalize(results[x]) for x in keys]))
 
 
-class PostTwoSprite(ByStudent):
-    """Plugin to inspect changes made once two sprites are picked up.
-
-    Excludes submissions using glide_to.
-
-    """
-    BLOCKS = ('glide %s to %s', 'glide to %s')
-
-    def analyze(self, scratch, filename, **kwargs):
-        def num_sprites(data):
-            return sum(data[x] > 0 for x in ('bear', 'horse', 'zebra'))
-
-        sys.stderr.write('.')
-        sys.stderr.flush()
-        assert self._last_filename < filename
-        self._last_filename = filename
-
-        student, submission = self.info(filename)
-        twosprite = student in self.by_student and \
-            self.by_student[student].get('twosprite', False)
-        if student in self.by_student and \
-                self.by_student[student].get('passed', False):
-            # For this plugin skip submissions once the student passes
-            return
-
-        # Fetch blocks and attrs
-        blocks, attrs, data = self.get_blocks_and_attrs(scratch)
-        if self.is_similar(student, blocks):  # Skip similar submissions
-            return
-        if any(x[0] for x in blocks if x[0] in self.BLOCKS):
-            # Skip submission if they used glide to
-            return
-        # Determine if it worked as expected
-        cur_passed = dynamic_analysis(blocks, attrs, data)
-        cur_twosprite = num_sprites(data) > 1
-
-        if cur_passed:
-            assert cur_twosprite
-
-        if twosprite:
-            self.by_student[student]['post_submissions'] += 1
-
-        if cur_twosprite and not twosprite:
-            student_data = {'passed': cur_passed, 'post_submissions': 0,
-                            'post_twosprite': 0, 'twosprite': True}
-            self.by_student[student] = student_data
-        elif cur_twosprite:
-            self.by_student[student]['post_twosprite'] += int(cur_twosprite)
-            if cur_passed:
-                self.by_student[student]['passed'] = True
-
-    def finalize(self):
-        for student in self.by_student.keys():
-            if self.by_student[student]['post_submissions'] == 0:
-                del self.by_student[student]
-            else:
-                del self.by_student[student]['twosprite']
-        super(PostTwoSprite, self).finalize()
-
-
 class ClassStats(ByStudent):
     """Plugin to provide basic statistics based on a per-class basis."""
     def analyze(self, scratch, filename, **kwargs):
-        def num_sprites(data):
-            return sum(data[x] > 0 for x in ('bear', 'horse', 'zebra'))
-
         student, submission = self.info(filename)
 
         class_name = student[:-2]
@@ -863,10 +796,7 @@ class ClassStats(ByStudent):
         if self.is_similar(student, blocks):  # Skip similar submissions
             return
         # Determine if it worked as expected
-        passed = dynamic_analysis(blocks, attrs, data)
-        sprites = num_sprites(data)
-        if passed:
-            assert sprites == 3
+        sprites = dynamic_analysis(blocks, attrs, data)
 
         # Increment submission count
         class_data['subs'][sprites] += 1
@@ -894,6 +824,7 @@ class ClassStats(ByStudent):
             print(', '.join([class_name] + [str(x) for x in class_data['subs']]
                             + [norm(x) for x in class_data['students']]))
 
+
 class Predator(Base):
     """Output statistics on the MammalsGame and AnimalsGame project."""
 
@@ -906,7 +837,7 @@ class Predator(Base):
         # TODO: Verify initial position and orientation (other attributes too?)
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
         # Determine if it worked as expected
-        passed = dynamic_analysis(blocks, attrs, data)
+        passed = dynamic_analysis(blocks, attrs, data) > 1
 
         data['net'] = self.net_position_analysis(scratch, data['net_position'])
         del data['net_position']
