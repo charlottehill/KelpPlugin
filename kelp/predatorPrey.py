@@ -289,6 +289,23 @@ class Base(KelpPlugin):
                 for block in script.blocks:
                     fp.write('      {}\n'.format(block))
 
+    def unique_blocks(self, blocks):
+        """Return the blocks that are different from what was provided."""
+        provided = (
+            (kurt.Block('whenClicked'),),
+            (kurt.Block('heading:', 90), kurt.Block('heading:', u'right')),
+            (kurt.Block('forward:elapsed:from:', 50),),
+            (kurt.Block('heading:', 180), kurt.Block('heading:', u'down')),
+            (kurt.Block('forward:elapsed:from:', 50),),
+            (kurt.Block('forward:elapsed:from:', 50),),
+            (kurt.Block('forward:elapsed:from:', 50),))
+        start = 0
+        while start < len(provided) and start < len(blocks):
+            if blocks[start][2] not in provided[start]:
+                break
+            start += 1
+        return blocks[start:]
+
 
 class ByStudent(Base):
     """Keep track of information by student."""
@@ -451,7 +468,7 @@ class ApproachBySub(ByStudent):
         counts = {x: 0 for x in APPROACH_TYPES}
         counts['Passed'] = dynamic_analysis(blocks, attrs, data) > 1
 
-        for name, _, _ in blocks:
+        for name, _, _ in self.unique_blocks(blocks):
             block_type = APPROACH_BLOCKS[name]
             if block_type:
                 counts[block_type] += 1
@@ -468,7 +485,7 @@ class ApproachBySub(ByStudent):
                             + [normalize(results[x]) for x in keys]))
 
 
-class MovementType(ByStudent):
+class Approaches(ByStudent):
     def analyze(self, scratch, filename, **kwargs):
         assert self._last_filename < filename
         self._last_filename = filename
@@ -498,7 +515,7 @@ class MovementType(ByStudent):
         # blocks = list(chain.from_iterable(self.iter_blocks(x.blocks) for x
         #                                   in self.net_scripts(scratch)))
 
-        for name, _, _ in blocks:
+        for name, _, _ in self.unique_blocks(blocks):
             block_type = APPROACH_BLOCKS[name]
             if block_type:
                 all_type_counts[block_type] += 1
@@ -558,11 +575,11 @@ class PostPassed(ByStudent):
         elif passed:
             self.by_student[student]['post_passed'] += int(cur_passed)
 
-        if cur_passed or passed:
-            count = self.by_student[student]['post_submissions']
-            with open('blocks/{}_{}.txt'.format(student, count), 'w') as fp:
-                fp.write('{} {} {}\n'.format(student, submission, cur_passed))
-                self.output(scratch, fp)
+        #if cur_passed or passed:
+        #    count = self.by_student[student]['post_submissions']
+        #    with open('blocks/{}_{}.txt'.format(student, count), 'w') as fp:
+        #        fp.write('{} {} {}\n'.format(student, submission, cur_passed))
+        #        self.output(scratch, fp)
 
     def finalize(self):
         for student in self.by_student.keys():
