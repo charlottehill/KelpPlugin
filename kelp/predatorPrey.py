@@ -10,7 +10,6 @@ from __future__ import print_function
 from collections import Counter, namedtuple
 from itertools import chain
 from kelpplugin import KelpPlugin
-from pprint import pprint
 import kurt
 import math
 import sys
@@ -192,7 +191,11 @@ def dynamic_analysis(blocks, attrs, data):
 
 
 class Base(KelpPlugin):
-    """Base class for plugins of the predatorPrey variety."""
+    """Base class for plugins of the Mammals or Animals Game variety.
+
+    This plugin is not used directly.
+
+    """
 
     def get_blocks_and_attrs(self, scratch):
         def initial_attributes(sprite):
@@ -308,7 +311,11 @@ class Base(KelpPlugin):
 
 
 class ByStudent(Base):
-    """Keep track of information by student."""
+    """Keep track of information by student.
+
+    This plugin is not used directly.
+
+    """
 
     def __init__(self):
         """Additionally keep track of submissions by student."""
@@ -338,7 +345,11 @@ class ByStudent(Base):
 class SnapshotChecker(ByStudent):
     MAMMALS = ('2013-11-14 11:18:27', 'save', 'MammalsGame')
     ANIMALS = ('2014-1-28 08:36:56', 'save', 'AnimalsGame')
-    """Compare the number of snapshots with the number of saved files."""
+    """Compare the number of snapshots with the number of saved files.
+
+    This plugin is used to verify the accuracy of data collection.
+
+    """
     def analyze(self, scratch, filename, **kwargs):
         def get_history():
             history = [tuple(x.strip().split('\t')) for x in
@@ -363,6 +374,7 @@ class SnapshotChecker(ByStudent):
 
 
 class DoubleClick(ByStudent):
+    """Attempts to identify students using double click to execute."""
     def analyze(self, scratch, filename, **kwargs):
         student, submission = self.info(filename)
 
@@ -435,36 +447,11 @@ class DoubleClick(ByStudent):
         super(DoubleClick, self).finalize()
 
 
-class AllBlocks(ByStudent):
-    """Output statistics on what blocks were used by student"""
-
-    def analyze(self, scratch, filename, **kwargs):
-        student, submission = self.info(filename)
-
-        file_blocks = Counter()
-        for script in self.net_scripts(scratch):
-            for name, _, _ in self.iter_blocks(script.blocks):
-                file_blocks[name] += 1
-
-        if student not in self.by_student:
-            self.by_student[student] = file_blocks
-        else:
-            self.by_student[student].update(file_blocks)
-
-    def finalize(self):
-        for student, results in self.by_student.items():
-            sys.stdout.write(student + ' ')
-            pprint(results.most_common())
-
-
 class ApproachBySub(ByStudent):
     """Keep track of the approach used on an individual submission."""
     def analyze(self, scratch, filename, **kwargs):
         student, submission = self.info(filename)
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
-        if self.is_similar(student, blocks):  # Skip similar submissions
-            return
-
         counts = {x: 0 for x in APPROACH_TYPES}
         counts['Passed'] = dynamic_analysis(blocks, attrs, data) > 1
 
@@ -486,6 +473,7 @@ class ApproachBySub(ByStudent):
 
 
 class Approaches(ByStudent):
+    """Keep track of the approaches used by student."""
     def analyze(self, scratch, filename, **kwargs):
         assert self._last_filename < filename
         self._last_filename = filename
@@ -503,8 +491,6 @@ class Approaches(ByStudent):
 
         # Determine if it worked as expected
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
-        if self.is_similar(student, blocks):  # Skip similar submissions
-            return
         if not passed:
             student_data['passed'] = dynamic_analysis(blocks, attrs, data) > 1
 
@@ -535,59 +521,6 @@ class Approaches(ByStudent):
         for block_type, count in upto_last_counts.items():
             student_data[block_type] += count > 0
             student_data['{}_last'.format(block_type)] = count > 0
-
-
-class PostPassed(ByStudent):
-    """Plugin to inspect changes made once a correct solution was created.
-
-    Excludes submissions using glide to.
-
-    """
-    BLOCKS = ('glide %s to %s', 'glide to %s')
-
-    def analyze(self, scratch, filename, **kwargs):
-        sys.stderr.write('.')
-        sys.stderr.flush()
-        assert self._last_filename < filename
-        self._last_filename = filename
-
-        student, submission = self.info(filename)
-        passed = student in self.by_student and \
-            self.by_student[student].get('passed', False)
-
-        # Fetch blocks and attrs
-        blocks, attrs, data = self.get_blocks_and_attrs(scratch)
-        if self.is_similar(student, blocks):  # Skip similar submissions
-            return
-        if any(x[0] for x in blocks if x[0] in self.BLOCKS):
-            # Skip submission if they used glide to
-            return
-        # Determine if it worked as expected
-        cur_passed = dynamic_analysis(blocks, attrs, data) > 1
-
-        if passed:
-            self.by_student[student]['post_submissions'] += 1
-
-        if cur_passed and not passed:
-            student_data = {'passed': True, 'post_submissions': 0,
-                            'post_passed': 0}
-            self.by_student[student] = student_data
-        elif passed:
-            self.by_student[student]['post_passed'] += int(cur_passed)
-
-        #if cur_passed or passed:
-        #    count = self.by_student[student]['post_submissions']
-        #    with open('blocks/{}_{}.txt'.format(student, count), 'w') as fp:
-        #        fp.write('{} {} {}\n'.format(student, submission, cur_passed))
-        #        self.output(scratch, fp)
-
-    def finalize(self):
-        for student in self.by_student.keys():
-            if self.by_student[student]['post_submissions'] == 0:
-                del self.by_student[student]
-            else:
-                del self.by_student[student]['passed']
-        super(PostPassed, self).finalize()
 
 
 class RaceCondition(ByStudent):
@@ -810,8 +743,6 @@ class ClassStats(ByStudent):
 
         # Fetch blocks and attrs
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
-        if self.is_similar(student, blocks):  # Skip similar submissions
-            return
         # Determine if it worked as expected
         sprites = dynamic_analysis(blocks, attrs, data)
 
@@ -842,12 +773,17 @@ class ClassStats(ByStudent):
                             + [norm(x) for x in class_data['students']]))
 
 
-class Predator(Base):
-    """Output statistics on the MammalsGame and AnimalsGame project."""
+class SnapshotInfo(Base):
+    """Output statistics on the MammalsGame and AnimalsGame projects.
+
+    This plugin is used to generate a heap of data about each snapshot, but
+    is not used directly in any of the paper's graphs.
+
+    """
 
     def __init__(self):
         """Initialize and instance of the Predator plugin."""
-        super(Predator, self).__init__()
+        super(SnapshotInfo, self).__init__()
         self.pass_count = 0
 
     def analyze(self, scratch, filename, **kwargs):
