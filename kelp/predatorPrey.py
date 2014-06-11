@@ -152,7 +152,6 @@ def dynamic_analysis(blocks, attrs, data):
             if net_position == next_position:
                 data['#unmoved'] += 1
                 continue
-
             compute_intersections(net_position, next_position, data)
             net_position = next_position
         elif name == 'point towards %s':
@@ -176,6 +175,9 @@ def dynamic_analysis(blocks, attrs, data):
             next_position = LOCATIONS[dst][0]
             # Glide to does not actually change the orientation
             # net_orientation = rotate_to(net_position, next_position)
+            if net_position == next_position:
+                data['#unmoved'] += 1
+                continue
             compute_intersections(net_position, next_position, data)
             net_position = next_position
         elif name not in ('when this sprite clicked',):
@@ -377,7 +379,6 @@ class DoubleClick(ByStudent):
     """Attempts to identify students using double click to execute."""
     def analyze(self, scratch, filename, **kwargs):
         student, submission = self.info(filename)
-
         student_data = self.by_student.setdefault(student, {})
         if not student_data:  # Initialize the data on first submission
             for attr in ('double_click', 'high_prob_1', 'high_prob_mult',
@@ -390,6 +391,7 @@ class DoubleClick(ByStudent):
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
         if self.is_similar(student, blocks):  # Skip similar submissions
             return
+
         if dynamic_analysis(blocks, attrs, data) > 1:
             # If at least two objects are picked up the student demonstrates
             # partial understanding
@@ -422,6 +424,8 @@ class DoubleClick(ByStudent):
             for i in range(8):  # None occur more than 8 times
                 if data['#invalid_x'] > 0 or data['#invalid_y'] > 0:
                     break
+                if data['snake'] == '':  # Fix issues with snake reset
+                    data['snake'] = 0
                 dynamic_analysis(blocks, attrs, data)
                 net = self.net_position_analysis(scratch, data['net_position'])
                 if net == 'COMPUTED':
@@ -429,15 +433,9 @@ class DoubleClick(ByStudent):
                     return
             if invalid_pos:  # Increment invalid position count
                 student_data['invalid_pos'] += 1
-        sys.stderr.write('{} {}\n'.format(student, submission))
         student_data['double_click'] += 1  # Potential double clicking
 
     def finalize(self):
-        for key in sorted(self.by_student.keys()):
-            if key.startswith('click_'):
-                print('{}: {}'.format(key, self.by_student[key]))
-                del self.by_student[key]
-
         for student in self.by_student.keys():
             tmp = self.by_student[student]
             if tmp['double_click'] == tmp['sprite_click'] == 0:
