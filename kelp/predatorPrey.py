@@ -717,8 +717,6 @@ class RaceCondition(ByStudent):
         del self.by_student['_nexts']
         keys = None
         for student, results in sorted(self.by_student.items()):
-            if results['matches'] == 0:
-                continue
             del results['subs']
             if keys is None:
                 keys = sorted(results.keys())
