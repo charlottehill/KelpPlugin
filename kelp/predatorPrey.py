@@ -447,16 +447,24 @@ class DoubleClick(ByStudent):
 
 class ApproachBySub(ByStudent):
     """Keep track of the approach used on an individual submission."""
+    ORI_TYPES = set(['abs_ori', 'rel_ori', 'oth_ori'])
+
     def analyze(self, scratch, filename, **kwargs):
         student, submission = self.info(filename)
         blocks, attrs, data = self.get_blocks_and_attrs(scratch)
         counts = {x: 0 for x in APPROACH_TYPES}
         counts['Passed'] = dynamic_analysis(blocks, attrs, data) > 1
 
+        prev_ori = None
         for name, _, _ in self.unique_blocks(blocks):
             block_type = APPROACH_BLOCKS[name]
-            if block_type:
+            if block_type in self.ORI_TYPES:  # Save until glide DIST
+                prev_ori = block_type
+            elif block_type:
                 counts[block_type] += 1
+                if prev_ori and block_type == 'abs_pos':
+                    counts[prev_ori] += 1
+                    prev_ori = None
 
         self.by_student[(student, submission)] = counts
 
@@ -472,6 +480,8 @@ class ApproachBySub(ByStudent):
 
 class Approaches(ByStudent):
     """Keep track of the approaches used by student."""
+    ORI_TYPES = set(['abs_ori', 'rel_ori', 'oth_ori'])
+
     def analyze(self, scratch, filename, **kwargs):
         assert self._last_filename < filename
         self._last_filename = filename
@@ -499,12 +509,20 @@ class Approaches(ByStudent):
         # blocks = list(chain.from_iterable(self.iter_blocks(x.blocks) for x
         #                                   in self.net_scripts(scratch)))
 
+        prev_ori = None
         for name, _, _ in self.unique_blocks(blocks):
             block_type = APPROACH_BLOCKS[name]
-            if block_type:
+            if block_type in self.ORI_TYPES:  # Save until glide DIST
+                prev_ori = block_type
+            elif block_type:
                 all_type_counts[block_type] += 1
                 if not passed:
                     upto_last_counts[block_type] += 1
+                if prev_ori and block_type == 'abs_pos':
+                    all_type_counts[prev_ori] += 1
+                    if not passed:
+                        upto_last_counts[prev_ori] += 1
+                    prev_ori = None
 
         for block_type, count in all_type_counts.items():
             student_data['{}_all'.format(block_type)] += count > 0
